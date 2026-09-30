@@ -41,10 +41,11 @@ jobs:
           python flux.py
           python packs.py
 
-      - name: Regrouper les variantes et contrôler le résultat
+      - name: Regrouper les variantes, calculer « Pour compléter » et contrôler le résultat
         working-directory: generateur
         run: |
           python donnees.py
+          python pour_completer.py
           python verifier.py
 
       - name: Archiver les données dans le dépôt
@@ -52,12 +53,12 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # repart de la dernière version de main (relance, exécution en file d'attente…) :
-          # seul ce robot écrit dans docs/variantes.json et docs/status.json
-          cp docs/variantes.json docs/status.json "$RUNNER_TEMP"/
+          # seul ce robot écrit dans docs/variantes.json, docs/pour-completer.json et docs/status.json
+          cp docs/variantes.json docs/pour-completer.json docs/status.json "$RUNNER_TEMP"/
           git fetch --depth=1 origin main
           git reset --hard origin/main
-          cp "$RUNNER_TEMP"/variantes.json "$RUNNER_TEMP"/status.json docs/
-          git add docs/variantes.json docs/status.json
+          cp "$RUNNER_TEMP"/variantes.json "$RUNNER_TEMP"/pour-completer.json "$RUNNER_TEMP"/status.json docs/
+          git add docs/variantes.json docs/pour-completer.json docs/status.json
           if git diff --cached --quiet; then
             echo "Aucun changement"
           else
