@@ -1,5 +1,8 @@
 generateur/rows.json
 generateur/packs.json
+generateur/accessoires.json
+generateur/pc_data.json
+generateur/pc_status.json
 generateur/variants_data.json
 generateur/variants_review.json
 __pycache__/
