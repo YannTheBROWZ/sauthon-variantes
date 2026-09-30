@@ -123,7 +123,7 @@ def family_of(r):
         return COLLECTION_VARIANT[cu]
     if col:
         return FAMILY_ALIAS.get(cu, cu.replace(' ', '')), None
-    nt = norm(r['t'])
+    nt = title_of(r['t'])
     for f in TITLE_FAMILIES:
         if re.search(rf'\b{f}\b', nt):
             return f.upper(), None
@@ -148,8 +148,43 @@ def size_label(kind, m):
         return m.group(1).capitalize() + ' modèle'
 
 
+# Mentions promo temporaires ajoutées aux titres (« + plan à langer offert ! », « + tour de lit offert »,
+# « – 20 % », « jusqu'à -30% », « French Days »…) : retirées partout où le générateur lit un titre, pour qu'un
+# produit en promo garde son groupe de variantes et sa composition. Ne touche ni « Carte cadeau » (nom de
+# produit), ni « 100% coton » (pas de signe moins), ni « Commode à langer ».
+_ART = r'(?:(?:le|la|les|l|un|une|son|sa|ses|\d+)\s+)?'
+_GIFT = r'(?:offerte?s?|en cadeau|gratuite?s?)\b'
+_FABRIC = r'(?!\s*(?:coton|lin|laine|elasthanne|polyester|polyamide|viscose|bambou|soie)\b)'
+PROMO_PATTERNS = [
+    # cadeau de un à quatre mots après « + » ou entre parenthèses : « + tour de lit offert », « (+ 2 draps offerts) »
+    r'[+(]\s*' + _ART + r'[a-z0-9-]+(?:\s+(?:de\s+|d\s+|a\s+|en\s+|du\s+|des\s+|pour\s+)?[a-z0-9-]+){0,3}?\s+' + _GIFT + r'\s*\)?',
+    # « et / avec … offert »
+    r'\b(?:et|avec)\s+' + _ART + r'[a-z0-9-]+(?:\s+(?:de\s+|d\s+|a\s+|en\s+)?[a-z0-9-]+){0,3}?\s+' + _GIFT,
+    # « plan à langer offert », « doudou offert » isolés
+    _ART + r'[a-z]+(?: a langer)? ' + _GIFT,
+    # remises : « -20% », « – 20 % », « jusqu'à -30% », « 2e à -50% », « -20% de réduction »
+    r'(?:\b(?:remise|reduction)\s+(?:de\s+)?|\bjusqu a\s*|\b\d+\s?(?:e|eme|nd|nde)\s+a\s*)?(?<![\w%])[-‐-―−]\s?\d{1,2}\s?%'
+    + _FABRIC + r'(?:\s+(?:de\s+)?(?:remise|reduction)\b)?',
+    r'\b(?:remise|reduction)\s+(?:de\s+)?\d{1,2}\s?%|\b\d{1,2}\s?%\s+(?:de\s+)?(?:remise|reduction)\b',
+    # opérations commerciales
+    r'\b(?:promo(?:tion)?s?|soldes?|black friday|french days|cyber monday|prix choc|edition limitee|vente flash'
+    r'|offre speciale|bon plan|nouveaute|fin de serie|destockage)\b',
+]
+
+
+def strip_promo(t):
+    for pat in PROMO_PATTERNS:
+        t = re.sub(pat, ' ', t)
+    return re.sub(r'\s+', ' ', t).strip(' -–—+!:|')
+
+
+def title_of(t):
+    """Titre normalisé et débarrassé des mentions promo : à utiliser partout où l'on lit un titre."""
+    return strip_promo(norm(t))
+
+
 def analyse(r):
-    t = norm(r['t'])
+    t = title_of(r['t'])
     fam, col_val = family_of(r)
     work = ' ' + t + ' '
     words = set(FAMILY_WORDS.get(fam, [])) | {norm(r['col'])} | {w for w in norm(r['col']).split() if len(w) > 2}
@@ -193,7 +228,7 @@ SET_CATEGORIES = {'nos-chambres-completes-duo', 'nos-chambres-completes-trio'}
 
 
 def comp_of(r, legacy=False):
-    t = norm(r['t'])
+    t = title_of(r['t'])
     if r['c0'] not in ('MEUBLES', 'MEUBLE') and r['c1'] != 'MEUBLES' and not re.search(r'\b(duo|trio|commode|lit|armoire)\b', t):
         return None
     has_bed = re.search(r'\blit\b|\bchambre\b', t)
@@ -256,7 +291,7 @@ for k, members in raw.items():
     if len(members) < 2:
         continue
     # doublons exacts de titre : indistinguables -> exclus
-    sig = lambda m: (norm(m['t']), m['c'], m['s'])
+    sig = lambda m: (title_of(m['t']), m['c'], m['s'])
     tc = collections.Counter(sig(m) for m in members)
     dup_titles = {t for t, n in tc.items() if n > 1}
     if dup_titles:
@@ -315,7 +350,7 @@ for pid, comp in SIZED.items():
 STOP = {'lit', 'bebe', 'commode', 'armoire', 'duo', 'trio', 'et', 'de', 'la', 'le', 'avec', 'chambre', 'pieces', 'x'}
 
 def words(t):
-    return {w for w in re.split(r'[^a-z0-9]+', norm(t)) if w and w not in STOP and not re.match(r'\d+x\d+', w)}
+    return {w for w in re.split(r'[^a-z0-9]+', title_of(t)) if w and w not in STOP and not re.match(r'\d+x\d+', w)}
 
 comp_families = collections.defaultdict(list)
 for it in items.values():
@@ -382,7 +417,7 @@ def piece_type(pid):
     it = items.get(pid)
     if not it:
         return None
-    t = norm(it['t'])
+    t = title_of(it['t'])
     if 'a langer' in t and re.match(r'(dispositif|plan)', t):
         return 'plan'
     if it['comp'] in SINGLES:
