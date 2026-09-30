@@ -189,7 +189,10 @@ def analyse(r):
     return dict(fam=fam, c=color, sizes=sizes, s=sizes[0] if sizes else None, skel=skel, **feats)
 
 
-def comp_of(r):
+SET_CATEGORIES = {'nos-chambres-completes-duo', 'nos-chambres-completes-trio'}
+
+
+def comp_of(r, legacy=False):
     t = norm(r['t'])
     if r['c0'] not in ('MEUBLES', 'MEUBLE') and r['c1'] != 'MEUBLES' and not re.search(r'\b(duo|trio|commode|lit|armoire)\b', t):
         return None
@@ -198,6 +201,13 @@ def comp_of(r):
         return 'trio'
     if has_bed and re.search(r'\bduo\b|2 pieces', t):
         return 'duo_armoire' if ('armoire' in t and 'commode' not in t) else 'duo'
+    # ensembles dont le titre ne dit ni « duo » ni « trio » (« Chambre bébé évolutive … Lit … et Commode ») :
+    # reconnus par leur catégorie ou leur titre ; le contenu réel du pack tranche ensuite duo / trio
+    cat = r['link'].split('/fr/', 1)[-1].split('/', 1)[0]
+    if not legacy and (cat in SET_CATEGORIES or (t.startswith('chambre bebe') and re.search(r'\blit\b', t))):
+        if cat == 'nos-chambres-completes-trio' or 'armoire' in t:
+            return 'trio'
+        return 'duo'
     if t.startswith('pack commode') and 'plan a langer' in t:
         return 'pack'
     if re.match(r'(petite )?commode\b', t) and 'ilot' not in t:
@@ -224,6 +234,7 @@ for r in rows:
     a.update(OVERRIDES.get(pid, {}))
     img = re.search(r'/(\d+)-[a-z_]+/', r['img'] or '')
     items[pid] = {**r, **a, 'id': pid, 'price': price, 'comp': comp_of(r),
+                  'comp_titre': comp_of(r) != comp_of(r, legacy=True),
                   'path': r['link'].replace(BASE, '').replace('.html', ''), 'imgid': int(img.group(1)) if img else None}
 
 # ---------- Groupes de variantes ----------
@@ -464,9 +475,11 @@ for pid in list(containing) + list(PACKS):
         pack_options[pid] = opts
 
 # fusion : les packs réels priment, l'heuristique reste pour les ensembles sans contenu lisible
+# ensembles reconnus seulement par catégorie / titre : uniquement si leur contenu de pack est lisible
+unverified = {pid for pid, it in items.items() if it['comp_titre'] and pid not in PACKS}
 heuristic_only = {pid: o for pid, o in comp_options.items()
                   if pid not in pack_options and not any(t in PACKS for _, t in o) and pid not in PACKS
-                  and pid not in containing}
+                  and pid not in containing and pid not in unverified and not any(t in unverified for _, t in o)}
 comp_options = {**pack_options, **heuristic_only}
 
 # incohérences titre / contenu : le pack annonce un coloris, contient la pièce d'un autre coloris
