@@ -1,9 +1,11 @@
 {
-  "genere_le": "2026-09-30T00:00:00Z",
+  "genere_le": "2026-09-30T12:33:04Z",
+  "produits_flux": 1555,
   "produits_relies": 706,
   "groupes_variantes": 205,
   "fiches_composition": 214,
+  "packs_lus": "94/100",
+  "packs_supprimes": [],
   "statut": "ok",
-  "erreurs": [],
-  "note": "version initiale, générée en local"
+  "erreurs": []
 }
