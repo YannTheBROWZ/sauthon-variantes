@@ -1,11 +1,12 @@
 {
-  "genere_le": "2026-09-30T14:25:14Z",
+  "genere_le": "2026-09-30T15:25:27Z",
   "produits_flux": 1555,
   "produits_relies": 710,
   "groupes_variantes": 205,
   "fiches_composition": 203,
   "packs_lus": "96/104",
   "packs_supprimes": [],
+  "pour_completer": null,
   "statut": "ok",
   "erreurs": []
 }
