@@ -1,0 +1,277 @@
+<!--
+  Sauthon · Sélecteurs de variantes (couleur, taille, autres) + composition (commode / duo / trio)
+  Tag HTML personnalisé GTM — les données sont chargées depuis GitHub Pages et régénérées chaque nuit
+  à partir du flux produits (dépôt github.com/YannTheBROWZ/sauthon-variantes).
+  Déclencheur conseillé : DOM prêt, sur les fiches produit.
+-->
+<style>
+.spv{margin:18px 0 8px;display:flex;flex-direction:column;gap:18px;color:#1f1f1f;font-family:inherit}
+.spv__dim{margin:0}
+.spv__label{margin:0 0 8px;font-size:14px;line-height:1.3;color:#6b6b6b}
+.spv__label strong{color:#1f1f1f;font-weight:600}
+.spv__list{display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;list-style:none}
+.spv__list li{margin:0;padding:0}
+.spv__swatch{display:flex;flex-direction:column;align-items:center;gap:5px;width:72px;color:#1f1f1f;text-decoration:none}
+.spv__swatch:hover{text-decoration:none}
+.spv__swatch-img{display:block;width:56px;height:56px;box-sizing:border-box;padding:3px;border:1px solid #e3d9d3;border-radius:12px;background:#fff;transition:border-color .15s,box-shadow .15s}
+.spv__swatch-img img{width:100%;height:100%;object-fit:cover;border-radius:8px;display:block;background:#f6f1ee}
+.spv__swatch-name{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:100%;font-size:12px;line-height:1.25;text-align:center;overflow-wrap:anywhere}
+.spv__swatch:hover .spv__swatch-img{border-color:#a77564}
+.spv__swatch.is-active .spv__swatch-img{border-color:#a77564;box-shadow:inset 0 0 0 1px #a77564}
+.spv__swatch.is-active .spv__swatch-name{font-weight:600}
+.spv__swatch.is-alt .spv__swatch-img{border-style:dashed}
+.spv__swatch.is-alt .spv__swatch-name{color:#6b6b6b}
+.spv__pill{display:inline-flex;align-items:center;min-height:40px;box-sizing:border-box;padding:0 16px;border:1px solid #e3d9d3;border-radius:9999px;background:#fff;font-size:14px;line-height:1.2;color:#1f1f1f;text-decoration:none;transition:border-color .15s}
+.spv__pill:hover{border-color:#a77564;text-decoration:none}
+.spv__pill.is-active{border-color:#a77564;box-shadow:inset 0 0 0 1px #a77564;background:#fbf6f3;font-weight:600}
+.spv .is-alt{border-style:dashed}
+.spv__pill.is-alt{color:#6b6b6b}
+.spv__cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin:0;padding:0;list-style:none}
+.spv__cards li{margin:0;padding:0}
+.spv__card{display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;box-sizing:border-box;padding:8px 6px 10px;border:1px solid #e3d9d3;border-radius:12px;background:#fff;font-size:12px;line-height:1.25;text-align:center;color:#1f1f1f;text-decoration:none;transition:border-color .15s}
+.spv__card:hover{border-color:#a77564;text-decoration:none}
+.spv__card img{width:64px;height:64px;object-fit:contain;display:block}
+.spv__card.is-active{border-color:#a77564;box-shadow:inset 0 0 0 1px #a77564;background:#fbf6f3;font-weight:600}
+.spv a:focus-visible{outline:2px solid #a77564;outline-offset:2px}
+.spv__sep{height:1px;margin:0;border:0;background:#eee4de}
+.spv__sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media (max-width:480px){.spv__swatch{width:68px}.spv__swatch-img{width:52px;height:52px}.spv__cards{grid-template-columns:repeat(3,1fr)}}
+@media (prefers-reduced-motion:reduce){.spv *{transition:none!important}}
+</style>
+<script>
+(function () {
+  'use strict';
+
+  /* ================= CONFIGURATION ================= */
+  var CONFIG = {
+    languages: ['fr'],
+    // 'apres-prix' : entre le prix et la disponibilité (recommandé) · 'avant-panier' : juste au-dessus du bouton
+    position: 'apres-prix',
+    showComposition: true,
+    compositionTitle: 'Composition',
+    newTab: true,            // true : un clic sur une variante ouvre la fiche dans un nouvel onglet
+    // Données régénérées chaque nuit par GitHub Actions à partir du flux produits
+    dataUrl: 'https://yannthebrowz.github.io/sauthon-variantes/variantes.json',
+    maxWaitMs: 5000          // au-delà, on n'affiche pas le bloc (évite un saut de mise en page tardif)
+  };
+  /* =============== FIN CONFIGURATION =============== */
+
+  var ps = window.prestashop;
+  var body = document.body;
+  if (!ps || !ps.urls || !body) return;
+  if (!/(^|\s)page-product(\s|$)/.test(body.className)) return;
+  var lang = ps.language && ps.language.iso_code;
+  if (lang && CONFIG.languages.indexOf(lang) === -1) return;
+  if (document.getElementById('spv-block')) return;
+
+  var idInput = document.getElementById('product_page_product_id');
+  var idMatch = /(?:^|\s)product-id-(\d+)(?:\s|$)/.exec(body.className);
+  var pid = parseInt((idInput && idInput.value) || (idMatch && idMatch[1]) || '0', 10);
+  if (!pid) return;
+
+  var started = new Date().getTime();
+  fetch(CONFIG.dataUrl, { credentials: 'omit' })
+    .then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(function (data) {
+      if (new Date().getTime() - started > CONFIG.maxWaitMs) return;
+      build(data);
+    })['catch'](function () { /* données indisponibles : la fiche reste telle quelle */ });
+
+  function build(D) {
+    if (document.getElementById('spv-block')) return;
+    var group = null;
+    var me = null;
+    for (var gi = 0; gi < D.g.length && !me; gi++) {
+      for (var mi = 0; mi < D.g[gi][2].length; mi++) {
+        if (D.g[gi][2][mi][0] === pid) {
+          group = D.g[gi];
+          me = D.g[gi][2][mi];
+          break;
+        }
+      }
+    }
+    var compo = CONFIG.showComposition && D.x[pid] !== undefined ? D.xl[D.x[pid]] : null;
+    if (!me && !compo) return;
+
+    var base = (ps.urls.base_url || '/') + (lang ? lang + '/' : '');
+
+    function url(id) {
+      var p = D.p[id];
+      if (!p) return '';
+      var slug = typeof p[1] === 'number' ? 'product-3500760' + ('00000' + p[1]).slice(-6) : p[1];
+      return base + D.c[p[0]] + '/' + id + '-' + slug + '.html';
+    }
+    function image(id, type) {
+      var p = D.p[id];
+      return p && p[2] ? (ps.urls.base_url || '/') + p[2] + '-' + type + '/product.jpg' : '';
+    }
+    function el(tag, cls, text) {
+      var n = document.createElement(tag);
+      if (cls) n.className = cls;
+      if (text) n.textContent = text;
+      return n;
+    }
+    function track(dimension, value, targetId) {
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({
+        event: 'variantes_click',
+        variantes: { product_id: pid, target_id: targetId, dimension: dimension, value: value }
+      });
+    }
+    function link(cls, targetId, active, dimension, value) {
+      var a = el('a', cls + (active ? ' is-active' : ''));
+      a.href = active ? url(pid) || '#' : url(targetId);
+      if (active) {
+        a.setAttribute('aria-current', 'true');
+        a.addEventListener('click', function (e) { e.preventDefault(); });
+      } else {
+        if (CONFIG.newTab) {
+          a.target = '_blank';
+          a.rel = 'noopener';
+        }
+        a.addEventListener('click', function () { track(dimension, value, targetId); });
+      }
+      return a;
+    }
+    // Signale l'ouverture dans un nouvel onglet aux lecteurs d'écran (à appeler une fois le contenu du lien posé)
+    function newTabHint(a, active) {
+      if (!CONFIG.newTab || active) return;
+      var aria = a.getAttribute('aria-label');
+      if (aria) a.setAttribute('aria-label', aria + ' (nouvel onglet)');
+      else a.appendChild(el('span', 'spv__sr', ' (nouvel onglet)'));
+    }
+    function label(name, value) {
+      var p = el('p', 'spv__label', name + ' : ');
+      p.appendChild(el('strong', '', value));
+      return p;
+    }
+
+    var block = el('div', 'spv');
+    block.id = 'spv-block';
+
+    // ---------- Section 1 : variantes du même produit ----------
+    if (me) {
+      var labels = group[0];
+      var orders = group[1];
+      var members = group[2];
+      var n = labels.length;
+      for (var k = 0; k < n; k++) {
+        var dimName = D.v[labels[k]];
+        var isColor = dimName === 'Couleur' || dimName === 'Motif';
+        var dim = el('div', 'spv__dim');
+        dim.appendChild(label(dimName, D.v[me[k + 1]]));
+        var list = el('ul', 'spv__list');
+        list.setAttribute('aria-label', dimName);
+
+        for (var oi = 0; oi < orders[k].length; oi++) {
+          var v = orders[k][oi];
+          var active = v === me[k + 1];
+          var best = null;
+          var bestScore = -1;
+          var maxScore = 0;
+          for (var j = 0; j < n; j++) if (j !== k) maxScore += 1 << (n - j);
+          for (var bi = 0; bi < members.length; bi++) {
+            var m = members[bi];
+            if (m[k + 1] !== v) continue;
+            var score = 0;
+            for (var jj = 0; jj < n; jj++) {
+              if (jj !== k && m[jj + 1] === me[jj + 1]) score += 1 << (n - jj);
+            }
+            if (score > bestScore) { best = m; bestScore = score; }
+          }
+          if (!best) continue;
+          var target = active ? me : best;
+          var alt = !active && bestScore < maxScore;
+          var valueText = D.v[v];
+          var a = link(isColor ? 'spv__swatch' : 'spv__pill', target[0], active, dimName, valueText);
+          var title = valueText;
+          if (alt) {
+            a.className += ' is-alt';
+            var diff = [];
+            for (var dj = 0; dj < n; dj++) {
+              if (dj !== k && target[dj + 1] !== me[dj + 1]) diff.push(D.v[labels[dj]].toLowerCase() + ' ' + D.v[target[dj + 1]]);
+            }
+            title += ' (existe en ' + diff.join(', ') + ')';
+          }
+          a.title = title;
+          if (isColor) {
+            // vignette photo + nom de la variante (la photo seule ne suffit pas quand c'est une photo d'ambiance)
+            var frame = el('span', 'spv__swatch-img');
+            var img = el('img');
+            img.src = image(target[0], 'small_default');
+            img.alt = '';
+            img.width = 50;
+            img.height = 50;
+            img.loading = 'lazy';
+            frame.appendChild(img);
+            a.appendChild(frame);
+            a.appendChild(el('span', 'spv__swatch-name', valueText));
+          } else {
+            a.textContent = valueText;
+          }
+          if (alt) a.setAttribute('aria-label', title);
+          newTabHint(a, active);
+          var li = el('li');
+          li.appendChild(a);
+          list.appendChild(li);
+        }
+        dim.appendChild(list);
+        block.appendChild(dim);
+      }
+    }
+
+    // ---------- Section 2 : composition (commode seule / duo / trio) ----------
+    if (compo) {
+      if (me) block.appendChild(el('hr', 'spv__sep'));
+      var current = '';
+      for (var ci = 0; ci < compo.length; ci++) if (compo[ci][1] === pid) current = D.l[compo[ci][0]];
+      var cdim = el('div', 'spv__dim spv__dim--compo');
+      cdim.appendChild(label(CONFIG.compositionTitle, current));
+      var cards = el('ul', 'spv__cards');
+      cards.setAttribute('aria-label', CONFIG.compositionTitle);
+      for (var cj = 0; cj < compo.length; cj++) {
+        var opt = compo[cj];
+        var isActive = opt[1] === pid;
+        var text = D.l[opt[0]];
+        var card = link('spv__card', opt[1], isActive, CONFIG.compositionTitle, text);
+        var cimg = el('img');
+        cimg.src = image(opt[1], 'cart_default');
+        cimg.alt = '';
+        cimg.width = 64;
+        cimg.height = 64;
+        cimg.loading = 'lazy';
+        card.appendChild(cimg);
+        card.appendChild(el('span', '', text));
+        newTabHint(card, isActive);
+        var cli = el('li');
+        cli.appendChild(card);
+        cards.appendChild(cli);
+      }
+      cdim.appendChild(cards);
+      block.appendChild(cdim);
+    }
+
+    // ---------- Placement ----------
+    function mount() {
+      if (block.parentNode) return;
+      var actions = document.querySelector('.product-actions') ||
+        (document.getElementById('add-to-cart-or-refresh') || {}).parentNode;
+      if (!actions || !actions.parentNode) return;
+      var col = actions.parentNode;
+      var prices = null;
+      if (CONFIG.position === 'apres-prix') {
+        for (var i = 0; i < col.children.length; i++) {
+          if (/(^|\s)js-product-prices(\s|$)/.test(col.children[i].className)) { prices = col.children[i]; break; }
+        }
+      }
+      if (prices) col.insertBefore(block, prices.nextSibling);
+      else col.insertBefore(block, actions);
+    }
+    mount();
+    if (typeof ps.on === 'function') ps.on('updatedProduct', mount);
+  }
+})();
+</script>
