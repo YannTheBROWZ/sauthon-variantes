@@ -1,12 +1,43 @@
 {
-  "genere_le": "2026-09-30T15:25:27Z",
+  "genere_le": "2026-09-30T15:29:07Z",
   "produits_flux": 1555,
   "produits_relies": 710,
   "groupes_variantes": 205,
   "fiches_composition": 203,
   "packs_lus": "96/104",
   "packs_supprimes": [],
-  "pour_completer": null,
+  "pour_completer": {
+    "fiches": 92,
+    "plans": 22,
+    "ajouts_auto": [],
+    "retraits": [
+      {
+        "fiche": 2797,
+        "plan": 2799,
+        "raison": "plan à langer absent du flux"
+      },
+      {
+        "fiche": 3140,
+        "plan": 2799,
+        "raison": "plan à langer absent du flux"
+      },
+      {
+        "fiche": 3609,
+        "plan": 2799,
+        "raison": "plan à langer absent du flux"
+      },
+      {
+        "fiche": 3162,
+        "plan": 2799,
+        "raison": "plan à langer absent du flux"
+      }
+    ],
+    "a_valider": [
+      2098,
+      4034,
+      4037
+    ]
+  },
   "statut": "ok",
   "erreurs": []
 }
