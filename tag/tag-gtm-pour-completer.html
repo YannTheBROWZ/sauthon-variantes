@@ -1,0 +1,331 @@
+<!--
+  Sauthon · Encart « Pour compléter » (plan à langer) sous le bouton panier
+  Tag HTML personnalisé GTM — la table fiche -> plan à langer est chargée depuis GitHub Pages et recalculée
+  chaque nuit (dépôt github.com/YannTheBROWZ/sauthon-variantes, règles : generateur/pour_completer_regles.py).
+  Prix, stock et ajout au panier sont lus en direct sur PrestaShop.
+  Déclencheur conseillé : DOM prêt, sur les fiches produit.
+-->
+<style>
+.spc{margin:20px 0 4px;color:#1f1f1f;font-family:inherit}
+.spc__title{margin:0 0 10px;font-size:18px;line-height:1.3;font-weight:600;color:#a77564}
+.spc__item{display:flex;align-items:center;gap:14px;padding:12px;border:1px solid #eadfd8;border-radius:14px;background:#fff}
+.spc__img{flex:0 0 72px;width:72px;height:72px;border-radius:10px;overflow:hidden;background:#f6f1ee;display:block}
+.spc__img img{width:100%;height:100%;object-fit:contain;display:block}
+.spc__info{flex:1 1 auto;min-width:0}
+.spc__name{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:15px;line-height:1.35;font-weight:500;color:inherit;text-decoration:none}
+.spc__name:hover{text-decoration:underline}
+.spc__prices{margin-top:4px;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px}
+.spc__price{font-size:16px;font-weight:700}
+.spc__regular{font-size:14px;color:#8a8a8a;text-decoration:line-through}
+.spc__lowest{margin:2px 0 0;font-size:11px;line-height:1.3;color:#8a8a8a}
+.spc__add{flex:0 0 44px;width:44px;height:44px;padding:0;border-radius:9999px;border:0;background:#edaf48;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background-color .15s,transform .15s}
+.spc__add:hover{background:#d9982f}
+.spc__add:active{transform:scale(.94)}
+.spc__add:focus-visible{outline:2px solid #a77564;outline-offset:2px}
+.spc__add[disabled]{cursor:default}
+.spc__add svg{width:22px;height:22px;display:block}
+.spc__msg{margin:6px 0 0;font-size:12px;color:#b3261e}
+.spc__line{height:12px;border-radius:6px;margin:6px 0}
+.spc--loading .spc__img,.spc--loading .spc__line,.spc--loading .spc__add{background:linear-gradient(90deg,#f3ece8 25%,#faf6f3 50%,#f3ece8 75%);background-size:200% 100%;animation:spc-shimmer 1.2s infinite}
+.spc__spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;animation:spc-spin .7s linear infinite}
+.spc__sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@keyframes spc-shimmer{to{background-position:-200% 0}}
+@keyframes spc-spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spc,.spc *{animation:none!important;transition:none!important}}
+</style>
+<script>
+(function () {
+  'use strict';
+
+  /* ================= CONFIGURATION ================= */
+  var CONFIG = {
+    title: 'Pour compléter',
+    languages: ['fr'],       // langues où l'encart s'affiche
+    showLowestPrice: true,   // affiche « Dernier prix le plus bas » quand PrestaShop le fournit
+    timeoutMs: 10000,
+    // Pas d'encart si le titre de la fiche dit que le plan à langer est déjà offert / inclus
+    // (ex. « + plan à langer offert ! »). Vérifié à chaque affichage : l'encart revient dès que la mention est retirée.
+    hideWhenTitleMatches: /(plan|dispositif) [aà] langer (offert|inclus|compris|gratuit|en cadeau)|(\+|\bet\b|\bavec\b) ?(le |un |son )?(plan|dispositif) [aà] langer/,
+
+    // Table fiche -> plan à langer, recalculée chaque nuit par GitHub Actions
+    dataUrl: 'https://yannthebrowz.github.io/sauthon-variantes/pour-completer.json'
+  };
+  /* =============== FIN CONFIGURATION =============== */
+
+  var ps = window.prestashop;
+  var body = document.body;
+  if (!ps || !ps.urls || !ps.urls.pages || !body) return;
+  if (!/(^|\s)page-product(\s|$)/.test(body.className)) return;
+  if (ps.language && CONFIG.languages.indexOf(ps.language.iso_code) === -1) return;
+  if (document.getElementById('spc-block')) return;
+
+  var idInput = document.getElementById('product_page_product_id');
+  var idMatch = /(?:^|\s)product-id-(\d+)(?:\s|$)/.exec(body.className);
+  var productId = String((idInput && idInput.value) || (idMatch && idMatch[1]) || '');
+  if (!productId) return;
+  // Plan à langer déjà offert / inclus d'après le titre de la fiche : pas d'encart (et aucune requête)
+  if (CONFIG.hideWhenTitleMatches && CONFIG.hideWhenTitleMatches.test(normalizeTitle(productTitle()))) return;
+
+  fetch(CONFIG.dataUrl, { credentials: 'omit' })
+    .then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(start)['catch'](function () { /* table indisponible : la fiche reste telle quelle */ });
+
+  function productTitle() {
+    var h1 = document.querySelector('h1.product-name') || document.querySelector('h1');
+    return h1 ? h1.textContent : document.title;
+  }
+  function normalizeTitle(s) {
+    s = String(s || '').toLowerCase();
+    if (s.normalize) s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return s.replace(/[\u2019']/g, ' ').replace(/\s+/g, ' ');
+  }
+
+  function start(D) {
+    var planId = D && D.map && D.map[productId];
+    if (!planId || document.getElementById('spc-block')) return;
+    planId = String(planId);
+
+    var ICON_PLUS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
+    var ICON_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+    var HEADERS = {
+      'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+      'Accept': 'application/json, text/javascript, */*; q=0.01',
+      'X-Requested-With': 'XMLHttpRequest'
+    };
+
+    var block = document.createElement('section');
+    block.id = 'spc-block';
+    block.className = 'spc spc--loading';
+    block.setAttribute('aria-busy', 'true');
+    block.innerHTML =
+      '<p class="spc__title" role="heading" aria-level="2"></p>' +
+      '<div class="spc__item"><span class="spc__img"></span>' +
+      '<div class="spc__info"><div class="spc__line" style="width:75%"></div><div class="spc__line" style="width:40%"></div></div>' +
+      '<span class="spc__add"></span></div>';
+    block.querySelector('.spc__title').textContent = CONFIG.title;
+
+    function anchor() {
+      return document.getElementById('add-to-cart-or-refresh') || document.querySelector('.product-add-to-cart');
+    }
+    var removed = false;
+    function mount() {
+      if (removed || block.parentNode) return;
+      var a = anchor();
+      if (a && a.parentNode) a.parentNode.insertBefore(block, a.nextSibling);
+    }
+    function unmount() {
+      removed = true;
+      if (block.parentNode) block.parentNode.removeChild(block);
+    }
+    function query(params) {
+      var out = [];
+      for (var k in params) {
+        if (Object.prototype.hasOwnProperty.call(params, k)) out.push(encodeURIComponent(k) + '=' + encodeURIComponent(params[k]));
+      }
+      return out.join('&');
+    }
+    function post(url, params) {
+      return new Promise(function (resolve, reject) {
+        var timer = setTimeout(function () { reject(new Error('timeout')); }, CONFIG.timeoutMs);
+        fetch(url, { method: 'POST', credentials: 'same-origin', headers: HEADERS, body: query(params) })
+          .then(function (r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+          })
+          .then(function (json) { clearTimeout(timer); resolve(json); },
+                function (err) { clearTimeout(timer); reject(err); });
+      });
+    }
+    function clean(s) {
+      return (s || '').replace(/\s+/g, ' ').trim();
+    }
+    function pushEvent(name, extra) {
+      var payload = { product_id: productId, plan_id: planId, plan_name: plan.name, plan_price: plan.price };
+      for (var k in extra) {
+        if (Object.prototype.hasOwnProperty.call(extra, k)) payload[k] = extra[k];
+      }
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({ event: name, pour_completer: payload });
+    }
+
+    // Lit le plan à langer via le rafraîchissement produit natif de PrestaShop :
+    // prix, prix barré, « dernier prix le plus bas » et stock identiques à sa propre fiche.
+    function parsePlan(d) {
+      var tpl = document.createElement('template');
+      tpl.innerHTML = (d.product_prices || '') + (d.product_cover_thumbnails || '') + (d.product_add_to_cart || '');
+      var root = tpl.content;
+      var text = function (sel) {
+        var n = root.querySelector(sel);
+        return n ? clean(n.textContent) : '';
+      };
+
+      var price = '';
+      var priceEl = root.querySelector('.product-current-price');
+      if (priceEl) {
+        var copy = priceEl.cloneNode(true);
+        var tax = copy.querySelector('.product-tax-label');
+        if (tax) tax.parentNode.removeChild(tax);
+        price = clean(copy.textContent);
+      }
+
+      var btn = root.querySelector('[data-button-action="add-to-cart"]');
+      var img = root.querySelector('.js-product-cover img') || root.querySelector('img');
+      var src = img ? img.getAttribute('src') || '' : '';
+      var sized = /-(?:large|medium|home|small|cart)_default\//;
+
+      return {
+        name: (D.plans && D.plans[planId]) || clean(d.product_title).replace(/\s*[|–-]\s*Sauthon\s*$/i, ''),
+        url: d.product_url || '',
+        price: price,
+        regular: text('.product-price-regular .line-through'),
+        lowest: CONFIG.showLowestPrice ? text('.omniversepricing-notice') : '',
+        image: sized.test(src) ? src.replace(sized, '-cart_default/') : src,
+        image2x: sized.test(src) ? src.replace(sized, '-home_default/') : '',
+        alt: img ? img.getAttribute('alt') || '' : '',
+        available: !!(btn && !btn.hasAttribute('disabled') && price)
+      };
+    }
+
+    var plan = {};
+    var addBtn = null;
+    var msg = null;
+    var busy = false;
+
+    function render() {
+      block.className = 'spc';
+      block.removeAttribute('aria-busy');
+      var item = block.querySelector('.spc__item');
+      item.innerHTML =
+        '<a class="spc__img"><img loading="lazy" width="72" height="72"></a>' +
+        '<div class="spc__info"><a class="spc__name"></a>' +
+        '<div class="spc__prices"><span class="spc__price"></span></div></div>' +
+        '<button type="button" class="spc__add"></button>';
+
+      var links = item.querySelectorAll('a');
+      for (var i = 0; i < links.length; i++) links[i].href = plan.url;
+      item.querySelector('.spc__img').setAttribute('tabindex', '-1');
+      item.querySelector('.spc__img').setAttribute('aria-hidden', 'true');
+
+      var img = item.querySelector('img');
+      img.src = plan.image;
+      if (plan.image2x) img.srcset = plan.image + ' 1x, ' + plan.image2x + ' 2x';
+      img.alt = plan.alt || plan.name;
+
+      item.querySelector('.spc__name').textContent = plan.name;
+      item.querySelector('.spc__price').textContent = plan.price;
+
+      var prices = item.querySelector('.spc__prices');
+      if (plan.regular && plan.regular !== plan.price) {
+        var reg = document.createElement('span');
+        reg.className = 'spc__regular';
+        reg.innerHTML = '<span class="spc__sr">Prix initial : </span>';
+        reg.appendChild(document.createTextNode(plan.regular));
+        prices.appendChild(reg);
+      }
+      if (plan.lowest) {
+        var low = document.createElement('p');
+        low.className = 'spc__lowest';
+        low.textContent = plan.lowest;
+        prices.parentNode.appendChild(low);
+      }
+
+      msg = document.createElement('p');
+      msg.className = 'spc__msg';
+      msg.setAttribute('role', 'status');
+      msg.hidden = true;
+      item.parentNode.appendChild(msg);
+
+      addBtn = item.querySelector('.spc__add');
+      setButton('idle');
+      addBtn.addEventListener('click', addToCart);
+    }
+
+    function setButton(state) {
+      if (state === 'loading') {
+        addBtn.disabled = true;
+        addBtn.innerHTML = '<span class="spc__spinner" aria-hidden="true"></span>';
+        addBtn.setAttribute('aria-label', 'Ajout au panier en cours');
+      } else if (state === 'done') {
+        addBtn.disabled = true;
+        addBtn.innerHTML = ICON_CHECK;
+        addBtn.setAttribute('aria-label', plan.name + ' ajouté au panier');
+      } else {
+        addBtn.disabled = false;
+        addBtn.innerHTML = ICON_PLUS;
+        addBtn.setAttribute('aria-label', 'Ajouter au panier : ' + plan.name);
+      }
+    }
+
+    function showError(text) {
+      msg.textContent = text;
+      msg.hidden = false;
+    }
+
+    function addToCart() {
+      if (busy) return;
+      busy = true;
+      msg.hidden = true;
+      setButton('loading');
+
+      var tokenInput = document.querySelector('#add-to-cart-or-refresh input[name="token"]');
+      post(ps.urls.pages.cart, {
+        token: ps.static_token || (tokenInput && tokenInput.value) || '',
+        id_product: planId,
+        id_customization: 0,
+        qty: 1,
+        add: 1,
+        action: 'update'
+      }).then(function (resp) {
+        var errors = resp && resp.errors;
+        if (!resp || resp.hasError || resp.success === false || (errors && errors.length)) {
+          if (typeof ps.emit === 'function') ps.emit('handleError', { eventType: 'addProductToCart', resp: resp });
+          var e = new Error('cart');
+          e.messages = errors;
+          throw e;
+        }
+        // Même événement que le bouton natif : mini-panier, popup de confirmation
+        // et add_to_cart GA4 (poussé par le module GTM du site) suivent automatiquement.
+        if (typeof ps.emit === 'function') {
+          ps.emit('updateCart', {
+            reason: {
+              idProduct: resp.id_product,
+              idProductAttribute: resp.id_product_attribute,
+              idCustomization: resp.id_customization,
+              linkAction: 'add-to-cart',
+              cart: resp.cart
+            },
+            resp: resp
+          });
+        }
+        pushEvent('pour_completer_add_to_cart');
+        setButton('done');
+        setTimeout(function () { setButton('idle'); }, 2500);
+      })['catch'](function (err) {
+        setButton('idle');
+        var m = err && err.messages;
+        showError((m && m.join ? m.join(' ') : m) || 'L’ajout au panier n’a pas fonctionné. Merci de réessayer.');
+      }).then(function () {
+        busy = false;
+      });
+    }
+
+    mount();
+    if (!block.parentNode) return;
+    if (typeof ps.on === 'function') ps.on('updatedProduct', mount);
+
+    var refreshUrl = ps.urls.pages.product + (ps.urls.pages.product.indexOf('?') === -1 ? '?' : '&') +
+      query({ id_product: planId, id_product_attribute: 0, action: 'refresh', ajax: 1, quantity_wanted: 1 });
+
+    post(refreshUrl, { id_product: planId, id_customization: 0, qty: 1 })
+      .then(function (d) {
+        plan = parsePlan(d || {});
+        if (!plan.available) return unmount();
+        render();
+        pushEvent('pour_completer_impression');
+      })['catch'](unmount);
+  }
+})();
+</script>
