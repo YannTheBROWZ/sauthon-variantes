@@ -285,8 +285,12 @@ COMP_LABEL = {'lit': 'Lit seul', 'commode': 'Commode seule', 'armoire': 'Armoire
               'duo': 'Duo lit + commode', 'duo_armoire': 'Duo lit + armoire', 'trio': 'Trio lit + commode + armoire'}
 SETS = {'pack', 'duo', 'duo_armoire', 'trio'}
 SINGLES = {'lit', 'commode', 'armoire'}
+# Sur un duo / trio, on ne propose que les autres ensembles (les pièces seules sont déjà listées
+# dans « Ce pack contient ») ; sur une pièce seule, on propose la pièce + les ensembles qui la contiennent.
+ROOM_SETS = {'duo', 'duo_armoire', 'trio'}
 OFFER = {'commode': ['commode', 'pack', 'duo', 'trio'], 'lit': ['lit', 'duo', 'duo_armoire', 'trio'],
-         'armoire': ['armoire', 'duo_armoire', 'trio'], 'duo_armoire': ['armoire', 'duo_armoire', 'trio']}
+         'armoire': ['armoire', 'duo_armoire', 'trio'], 'duo': ['duo', 'trio'], 'trio': ['duo', 'trio'],
+         'duo_armoire': ['duo_armoire', 'trio']}
 OFFER_SETS = ['commode', 'pack', 'duo', 'trio']
 # gammes Paloma (Blanc) : commode / duo / trio de la même gamme
 LINE = {3656: 'XS', 3668: 'XS', 3628: 'XS', 3657: 'M', 3669: 'M', 3626: 'M', 3658: 'M évolutif', 3670: 'M évolutif',
@@ -440,8 +444,11 @@ for pid in list(containing) + list(PACKS):
             next((i for i in content if piece_type(i) == 'armoire'), None)
         if not anchor or anchor not in items:
             continue
-        opts = [(PIECE_LABEL_OVERRIDE.get(anchor, PIECE_LABEL[piece_type(anchor)]), anchor)]
-        opts += pick(containing[anchor], bed_size(pid), prefer=pid)
+        if pack_type(pid) in ROOM_SETS:
+            opts = [o for o in pick(containing[anchor], bed_size(pid), prefer=pid) if pack_type(o[1]) in ROOM_SETS]
+        else:
+            opts = [(PIECE_LABEL_OVERRIDE.get(anchor, PIECE_LABEL[piece_type(anchor)]), anchor)]
+            opts += pick(containing[anchor], bed_size(pid), prefer=pid)
     else:
         ptype = piece_type(pid)
         if ptype not in PIECE_LABEL:
