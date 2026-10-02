@@ -1,5 +1,5 @@
 {
-  "genere_le": "2026-10-01T10:05:49Z",
+  "genere_le": "2026-10-02T09:43:31Z",
   "produits_flux": 1555,
   "produits_relies": 710,
   "groupes_variantes": 205,
@@ -7,31 +7,10 @@
   "packs_lus": "96/104",
   "packs_supprimes": [],
   "pour_completer": {
-    "fiches": 92,
-    "plans": 22,
+    "fiches": 96,
+    "plans": 23,
     "ajouts_auto": [],
-    "retraits": [
-      {
-        "fiche": 2797,
-        "plan": 2799,
-        "raison": "plan à langer absent du flux"
-      },
-      {
-        "fiche": 3140,
-        "plan": 2799,
-        "raison": "plan à langer absent du flux"
-      },
-      {
-        "fiche": 3609,
-        "plan": 2799,
-        "raison": "plan à langer absent du flux"
-      },
-      {
-        "fiche": 3162,
-        "plan": 2799,
-        "raison": "plan à langer absent du flux"
-      }
-    ],
+    "retraits": [],
     "a_valider": [
       2098,
       4034,
