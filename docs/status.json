@@ -1,16 +1,37 @@
 {
-  "genere_le": "2026-10-04T09:44:44Z",
-  "produits_flux": 1554,
-  "produits_relies": 710,
-  "groupes_variantes": 205,
-  "fiches_composition": 203,
-  "packs_lus": "96/104",
+  "genere_le": "2026-10-05T10:22:19Z",
+  "produits_flux": 1551,
+  "produits_relies": 703,
+  "groupes_variantes": 204,
+  "fiches_composition": 196,
+  "packs_lus": "93/101",
   "packs_supprimes": [],
   "pour_completer": {
-    "fiches": 96,
-    "plans": 23,
+    "fiches": 92,
+    "plans": 22,
     "ajouts_auto": [],
-    "retraits": [],
+    "retraits": [
+      {
+        "fiche": 2092,
+        "plan": 2094,
+        "raison": "fiche absente du flux"
+      },
+      {
+        "fiche": 3152,
+        "plan": 2094,
+        "raison": "fiche absente du flux"
+      },
+      {
+        "fiche": 3610,
+        "plan": 2094,
+        "raison": "fiche absente du flux"
+      },
+      {
+        "fiche": 3173,
+        "plan": 2094,
+        "raison": "fiche absente du flux"
+      }
+    ],
     "a_valider": [
       2098,
       4034,
