@@ -1,14 +1,14 @@
 {
-  "genere_le": "2026-10-14T08:40:01Z",
-  "produits_flux": 1542,
-  "produits_relies": 697,
-  "groupes_variantes": 205,
-  "fiches_composition": 189,
-  "packs_lus": "93/98",
+  "genere_le": "2026-10-15T08:15:35Z",
+  "produits_flux": 1546,
+  "produits_relies": 704,
+  "groupes_variantes": 206,
+  "fiches_composition": 196,
+  "packs_lus": "96/101",
   "packs_supprimes": [],
   "pour_completer": {
-    "fiches": 93,
-    "plans": 23,
+    "fiches": 97,
+    "plans": 24,
     "ajouts_auto": [
       {
         "fiche": 2569,
@@ -18,28 +18,7 @@
         "source": "accessoire PrestaShop"
       }
     ],
-    "retraits": [
-      {
-        "fiche": 2092,
-        "plan": 2094,
-        "raison": "fiche absente du flux"
-      },
-      {
-        "fiche": 3152,
-        "plan": 2094,
-        "raison": "fiche absente du flux"
-      },
-      {
-        "fiche": 3610,
-        "plan": 2094,
-        "raison": "fiche absente du flux"
-      },
-      {
-        "fiche": 3173,
-        "plan": 2094,
-        "raison": "fiche absente du flux"
-      }
-    ],
+    "retraits": [],
     "a_valider": [
       2098,
       4034,
