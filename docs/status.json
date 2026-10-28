@@ -1,13 +1,13 @@
 {
-  "genere_le": "2026-10-27T08:56:35Z",
-  "produits_flux": 1625,
-  "produits_relies": 701,
+  "genere_le": "2026-10-28T09:37:16Z",
+  "produits_flux": 1600,
+  "produits_relies": 705,
   "groupes_variantes": 205,
-  "fiches_composition": 196,
-  "packs_lus": "96/101",
+  "fiches_composition": 200,
+  "packs_lus": "104/108",
   "packs_supprimes": [],
   "pour_completer": {
-    "fiches": 97,
+    "fiches": 98,
     "plans": 24,
     "ajouts_auto": [
       {
@@ -16,6 +16,13 @@
         "plan": 2571,
         "nom_plan": "Dispositif à langer 15kg Gris Volcan Boreale",
         "source": "accessoire PrestaShop"
+      },
+      {
+        "fiche": 4149,
+        "titre": "Pack duo lit bébé évolutif 120x60 en 90x190 et commode 3 tiroirs MOKKA",
+        "plan": 3649,
+        "nom_plan": "Dispositif à langer Mokka",
+        "source": "commode du pack"
       }
     ],
     "retraits": [],
