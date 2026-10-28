@@ -9,6 +9,6 @@ def g(it, t):
     return (e.text or '').strip() if e is not None else ''
 rows = [dict(id=g(i, 'id'), t=g(i, 'title'), col=g(i, 'custom_label_3'), c0=g(i, 'custom_label_0'), c1=g(i, 'custom_label_1'),
              c2=g(i, 'custom_label_2'), p=g(i, 'price'), sp=g(i, 'sale_price'), av=g(i, 'availability'), link=g(i, 'link'),
-             img=g(i, 'image_link')) for i in root.findall('.//item')]
+             img=g(i, 'image_link'), ref=g(i, 'mpn')) for i in root.findall('.//item')]   # ref = référence produit PrestaShop
 json.dump(rows, open('rows.json', 'w'), ensure_ascii=False)
 print(len(rows), 'produits')

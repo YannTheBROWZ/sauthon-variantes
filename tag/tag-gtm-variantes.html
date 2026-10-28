@@ -58,7 +58,7 @@
     maxAgeDays: 7,           // données plus anciennes (tâche nocturne en panne) : rien n'est affiché · 0 = sans limite
     // Plafonds d'affichage par fiche (données réelles : 3 dimensions, 12 membres, 5 valeurs, 5 options au plus)
     maxDims: 6, maxMembers: 60, maxValues: 30, maxOptions: 10,
-    version: '2026-10-28'    // reporté dans data-version du bloc et dans la note de version GTM
+    version: '2026-10-28b'   // reporté dans data-version du bloc et dans la note de version GTM
   };
   /* =============== FIN CONFIGURATION =============== */
 
@@ -267,7 +267,7 @@
       var n = labels.length;
       for (var k = 0; k < n; k++) {
         var dimName = D.v[labels[k]];
-        var isColor = dimName === 'Couleur' || dimName === 'Motif';
+        var isColor = dimName === 'Couleur' || dimName === 'Motif' || dimName === 'Coloris' || dimName === 'Modèle';
         var dim = el('div', 'spv__dim');
         dim.appendChild(label(dimName, D.v[me[k + 1]]));
         var list = el('ul', 'spv__list');

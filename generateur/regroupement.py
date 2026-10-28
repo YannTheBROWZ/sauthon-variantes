@@ -106,14 +106,39 @@ MERGES = [  # (ids, commentaire)
     ([3636, 3627], 'Armoire 2 portes Paloma'),
     ([3161, 4033], 'Trio Access Bois 120x60 / 140x70'),
     ([3160, 4034], 'Trio Access Bois Blanc 120x60 / 140x70'),
+    # demandes du client (appel du 28/10/2026, commentaires du tableau de validation)
+    ([3937, 3938, 3939, 3940], 'Bureau Arche : titres différents selon le coloris (couleurs données par le client)'),
+    ([3951, 3948, 3923, 2377], 'Lits junior 90x190 Arty / Mokka / My Love / Seventies reliés entre eux (sélecteur « Modèle »)'),
+    ([3023, 3024, 3025], 'Commode 3 tiroirs Basic : boutons boule / cœur / étoile selon le coloris'),
+    ([3026, 3027, 3028], 'Armoire 2 portes Basic : boutons boule / cœur / étoile selon le coloris'),
+    ([3020, 3021], 'Lit combiné évolutif 120x60 Basic : boutons cœur / étoile selon le coloris'),
+    ([3194, 3230, 3246, 3262], 'Matelas à langer Uni : le titre Sauge ne dit pas « housse élastique »'),
+    ([3296, 3297, 3298, 3299], 'Gigoteuses ouatinées Orsino : naissance Nuages, 0-6 mois Maison ou Ours, 6-24 mois Ours'),
+    ([2684, 2685, 2686, 2687], 'Gigoteuses Esmée : motif floral et Terracotta dans un même sélecteur'),
+    ([2739, 2740, 2741, 2742, 2743, 2744, 2745, 2746, 2747], 'Gigoteuses Promenons-nous : motif végétal, Tilleul, Jaune topaze'),
 ]
+# libellé du sélecteur « couleur » d'un regroupement (clé : 1er id du regroupement) : Couleur par défaut
+GROUP_ATTR = {3951: 'Modèle', 3296: 'Motif', 2684: 'Coloris', 2739: 'Coloris'}  # tout id du regroupement convient
+# produit affiché AUSSI dans le groupe d'un autre produit (sans quitter le sien) : {produit: (produit du groupe, valeurs)}
+# Sur la page du produit lui-même, la balise affiche son propre groupe (le 1er qui le contient).
+EXTRA_MEMBERS = {3134: (3126, {'c': 'Tout bois'})}   # client 28/10 : 3e couleur des lits FIRST = lit UP Chêne doré
+# contenu des ensembles qui ne sont pas des packs PrestaShop (vérifié sur les fiches : dimensions des pièces)
+MANUAL_PACKS = {3959: [2107, 3023], 3958: [2107, 3023, 3026]}  # chambres complètes Basic boutons boule
 OVERRIDES = {4034: {'c': 'Bois blanc', 's': '140x70'}, 3383: {'c': 'Blanc'}, 3172: {'c': 'Blanc'}, 3171: {'c': 'Bois blanc'}, 2098: {'c': 'Bois'}, 2099: {'c': 'Blanc'},
              3657: {'c': 'Blanc'}, 3669: {'c': 'Blanc'}, 3627: {'c': 'Blanc'}, 4033: {'s': '140x70'},
              2462: {'c': 'Blanc / bois'}, 2463: {'c': 'Tilleul'}, 2434: {'c': 'Tilleul'},
              3900: {'s': '0-6 mois'}, 3901: {'s': '6-24 mois'}, 3974: {'c': 'Rose'}, 3975: {'c': 'Vert'},
              3976: {'c': 'Citron'}, 2896: {'c': 'Écru'}, 2421: {'c': 'Bleu tilleul'},
              2362: {'s': '90x190 et 140x190'}, 2361: {'s': '90x190 et 140x190'},
-             2366: {'s': '90x200 et 140x200'}, 2365: {'s': '90x200 et 140x200'}}
+             2366: {'s': '90x200 et 140x200'}, 2365: {'s': '90x200 et 140x200'},
+             # demandes du client du 28/10/2026 (couleurs données par le client ; motifs lus sur les fiches)
+             3937: {'c': 'Bois'}, 3938: {'c': 'Caramel'}, 3939: {'c': 'Sauge'}, 3940: {'c': 'Terracotta'},
+             3941: {'c': 'Bois'}, 3942: {'c': 'Caramel'}, 3943: {'c': 'Sauge'}, 3944: {'c': 'Terracotta'},
+             3951: {'c': 'Arty'}, 3948: {'c': 'Mokka'}, 3923: {'c': 'My Love'}, 2377: {'c': 'Seventies'},
+             3021: {'c': 'Gris'},
+             3296: {'c': 'Nuages'}, 3297: {'c': 'Maison'}, 3298: {'c': 'Ours'}, 3299: {'c': 'Ours'},
+             2684: {'c': 'Motif floral'}, 2686: {'c': 'Motif floral'},
+             2739: {'c': 'Motif végétal'}, 2742: {'c': 'Motif végétal'}, 2743: {'c': 'Motif végétal'}}
 EXCLUDE = set()  # 4034 n'est pas un doublon de 4033 : c'est le trio Access Bois Blanc (2809 + 2810 + 2811)
 
 
@@ -330,8 +355,25 @@ for k, members in raw.items():
         kept = [m for m in kept if tuple(m[d] for d in dims) not in clash]
     if len(kept) < 2:
         continue
+    attr = next((GROUP_ATTR[m['id']] for m in members if m['id'] in GROUP_ATTR), None) if k[0] == 'MERGE' else None
     groups.append({'key': k, 'dims': dims, 'members': kept,
-                   'attr': 'Motif' if kept[0]['fam'] in MOTIF_FAMILIES else 'Couleur'})
+                   'attr': attr or ('Motif' if kept[0]['fam'] in MOTIF_FAMILIES else 'Couleur')})
+
+# produits affichés aussi dans le groupe d'un autre produit (EXTRA_MEMBERS) : le groupe d'accueil passe après le
+# groupe du produit, pour que sa propre page garde son propre sélecteur (la balise prend le 1er groupe trouvé)
+for pid, (hote, vals) in EXTRA_MEMBERS.items():
+    gi = next((i for i, g in enumerate(groups) if any(m['id'] == hote for m in g['members'])), None)
+    if pid not in items or gi is None or any(m['id'] == pid for m in groups[gi]['members']):
+        continue
+    g = groups[gi]
+    extra = {**items[pid], **vals}
+    if any(not extra[d] for d in g['dims']) or tuple(extra[d] for d in g['dims']) in {tuple(m[d] for d in g['dims']) for m in g['members']}:
+        issues.append(('Ajout manuel impossible (valeur manquante ou en double)', [pid]))
+        continue
+    g['members'].append(extra)
+    propre = next((i for i, g2 in enumerate(groups) if i != gi and any(m['id'] == pid for m in g2['members'])), None)
+    if propre is not None and propre > gi:
+        groups.append(groups.pop(gi))
 
 # ---------- Composition ----------
 COMP_LABEL = {'lit': 'Lit seul', 'commode': 'Commode seule', 'armoire': 'Armoire seule', 'pack': 'Commode + plan à langer',
@@ -415,6 +457,9 @@ try:
     PACKS = {int(k): v['items'] for k, v in json.load(open('packs.json')).items() if v.get('items')}
 except FileNotFoundError:
     pass
+for sid, content in MANUAL_PACKS.items():   # ensembles hors packs PrestaShop, contenu vérifié à la main
+    if sid in items and all(i in items for i in content):
+        PACKS.setdefault(sid, content)
 PIECE_LABEL = {'lit': 'Lit seul', 'commode': 'Commode seule', 'armoire': 'Armoire seule'}
 PIECE_LABEL_OVERRIDE = {3628: 'Meuble à langer seul'}
 TYPE_ORDER = ['pack', 'duo', 'duo_armoire', 'trio']
@@ -499,6 +544,8 @@ for pid in list(containing) + list(PACKS):
             continue
         if pack_type(pid) in ROOM_SETS:
             opts = [o for o in pick(containing[anchor], bed_size(pid), prefer=pid) if pack_type(o[1]) in ROOM_SETS]
+            if pid in MANUAL_PACKS:   # pas de bloc « Ce pack contient » sur ces fiches : les pièces seules sont proposées
+                opts = [(PIECE_LABEL[piece_type(i)], i) for i in content if piece_type(i) in PIECE_LABEL] + opts
         else:
             opts = [(PIECE_LABEL_OVERRIDE.get(anchor, PIECE_LABEL[piece_type(anchor)]), anchor)]
             opts += pick(containing[anchor], bed_size(pid), prefer=pid)
