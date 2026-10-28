@@ -4,6 +4,7 @@ TABLE_VALIDEE : correspondances validées (fiche commode / duo / trio -> plan à
 A_VALIDER     : suggestions en attente de validation client : NON publiées tant qu'elles restent ici.
                 Pour en activer une, la déplacer dans TABLE_VALIDEE ; pour en refuser une, la déplacer dans EXCLUS.
 EXCLUS        : fiches qui ne doivent jamais avoir l'encart (plan déjà inclus, commode à langer…).
+                Règle Sauthon : sauf mention dans le titre, le plan à langer n'est jamais inclus dans un duo ou un trio.
                 ATTENTION : seul EXCLUS bloque l'ajout automatique. Une ligne simplement SUPPRIMÉE de TABLE_VALIDEE
                 ou d'A_VALIDER est republiée la nuit suivante si les accessoires PrestaShop ou la commode du pack
                 la relient à un plan. Pour retirer ou refuser une correspondance : la déplacer dans EXCLUS.
@@ -38,6 +39,11 @@ PLANS_NOMS = {
     3921: 'Plan à langer coulissant My Love',
     3922: 'Plan à langer coulissant My Love XXL',
     3927: 'Plan à langer multiposition Îlot bébé',
+    2571: 'Dispositif à langer Boréale Gris Volcan',
+    4114: 'Dispositif à langer coulissant Choco',
+    4118: 'Dispositif à langer coulissant Bohème',
+    4125: 'Dispositif à langer coulissant Mokka XXL',
+    4134: 'Dispositif à langer coulissant Arty XXL',
 }
 
 TABLE_VALIDEE = {
@@ -137,11 +143,21 @@ TABLE_VALIDEE = {
     3423: 3215,  # Duo lit 120x60 + commode Vanille
     3558: 3215,  # Duo lit 140x70 + commode Vanille
     3429: 3215,  # Trio lit 120x60 + commode + armoire Vanille
+    4034: 2814,  # Chambre bébé trio Access Bois Blanc (2809 + 2810 + 2811) : plan non inclus (règle : sauf mention dans le titre, jamais de plan dans un duo / trio)
+    4037: 3921,  # Chambre bébé duo évolutive My Love (3919 + 3920) : plan non inclus (même règle)
 }
 
 A_VALIDER = {
-    4034: 2789,  # Chambre bébé trio: Lit bébé 70x140 évolutif, commode + armoire — Titre « commode à langer » : vérifier que le plan n’est pas déjà inclus (même prix que 4033)
-    4037: 3921,  # Chambre bébé duo évolutive My Love, Lit 140x70 évolutif et Commode à langer 2 tiroirs — Description : « commode … équipée d’un dispositif à langer coulissant » → plan peut-être inclus
+    # Nouveautés d'octobre : PrestaShop vend la paire commode + plan en pack, mais rien ne relie automatiquement ces fiches
+    4112: 4114,  # COMMODE 4 TIROIRS CHOCO
+    4142: 4114,  # Pack duo lit bébé évolutif 140x70 et commode 4 tiroirs CHOCO
+    4143: 4114,  # Pack chambre bébé complète lit évolutif 140x70, commode et armoire CHOCO
+    4116: 4118,  # COMMODE 6 TIROIRS BOHEME
+    4137: 4118,  # Pack duo lit bébé évolutif 140x70 et commode 6 tiroirs BOHÈME
+    4138: 4118,  # Pack chambre bébé complète lit évolutif 140x70, commode et armoire BOHÈME
+    4124: 4125,  # COMMODE XXL MOKKA
+    4153: 4125,  # Pack duo lit bébé évolutif 140x70 et commode XXL 5 tiroirs MOKKA
+    4133: 4134,  # COMMODE XXL 6 TIROIRS ARTY
     2098: 2101,  # Commode 1 porte et 3 tiroirs Seventies version Bois — Version Bois : 2101 (dessus chêne, joues blanches, comme la version Blanc) ou 3275 (tout chêne doré) ?
 }
 
@@ -175,12 +191,12 @@ EXCLUS = {
     3958,  # Commode à langer (plan intégré), aucun plan vendu séparément : Chambre bébé complète Basic, Lit 120x60 tout barreaux, Commode à lange
     3959,  # Commode à langer (plan intégré), aucun plan vendu séparément : Chambre bébé complète Basic, Lit 120x60 et Commode à langer - boutons 
     3993,  # Commode à langer (plan intégré), aucun plan vendu séparément : Commode à langer 2 tiroirs et une niche poignées métal - Angèle
-    3995,  # Plan à langer déjà inclus : Chambre bébé 2 pièces Angèle, Lit bébé 60x120 à barreaux et Commode à 
-    3996,  # Plan à langer déjà inclus : Chambre bébé 3 pièces Angèle, Lit bébé 120x60 à barreaux, Commode à la
+    3995,  # Commode à langer (plan intégré), aucun plan vendu séparément : Chambre bébé 2 pièces Angèle, Lit bébé 60x120 à barreaux et Commode à 
+    3996,  # Commode à langer (plan intégré), aucun plan vendu séparément : Chambre bébé 3 pièces Angèle, Lit bébé 120x60 à barreaux, Commode à la
     4004,  # Commode à langer (plan intégré), aucun plan vendu séparément : Commode à langer 3 tiroirs avec fronton et pieds bois laqués -  ouvert
-    4006,  # Plan à langer déjà inclus : Chambre bébé 2 pièces Milann, Lit bébé 120x60 et Commode à langer + pl
-    4007,  # Plan à langer déjà inclus : Chambre bébé 3 pièces Milann, Lit bébé 120x60, Commode à langer et arm
+    4006,  # Commode à langer (plan intégré), aucun plan vendu séparément : Chambre bébé 2 pièces Milann, Lit bébé 120x60 et Commode à langer + pl
+    4007,  # Commode à langer (plan intégré), aucun plan vendu séparément : Chambre bébé 3 pièces Milann, Lit bébé 120x60, Commode à langer et arm
     4010,  # Commode à langer (plan intégré), aucun plan vendu séparément : Commode à langer 3 tiroirs sur pieds - décor bois hêtre cendré - Opali
-    4012,  # Plan à langer déjà inclus : Chambre bébé 3 pièces Opaline, Lit bébé 120x60, Commode et Armoire 3 p
-    4014,  # Plan à langer déjà inclus : Chambre bébé 2 pièces Opaline, Lit bébé 120x60, Commode + plan à lange
+    4012,  # Commode à langer (plan intégré), aucun plan vendu séparément : Chambre bébé 3 pièces Opaline, Lit bébé 120x60, Commode et Armoire 3 p
+    4014,  # Commode à langer (plan intégré), aucun plan vendu séparément : Chambre bébé 2 pièces Opaline, Lit bébé 120x60, Commode + plan à lange
 }

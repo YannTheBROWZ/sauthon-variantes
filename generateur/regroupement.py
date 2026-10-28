@@ -105,15 +105,16 @@ MERGES = [  # (ids, commentaire)
     ([3667, 3665, 3669], 'Trio Paloma lit + commode 3 tiroirs + armoire (Blanc = « Trio M »)'),
     ([3636, 3627], 'Armoire 2 portes Paloma'),
     ([3161, 4033], 'Trio Access Bois 120x60 / 140x70'),
+    ([3160, 4034], 'Trio Access Bois Blanc 120x60 / 140x70'),
 ]
-OVERRIDES = {3383: {'c': 'Blanc'}, 3172: {'c': 'Blanc'}, 3171: {'c': 'Bois blanc'}, 2098: {'c': 'Bois'}, 2099: {'c': 'Blanc'},
+OVERRIDES = {4034: {'c': 'Bois blanc', 's': '140x70'}, 3383: {'c': 'Blanc'}, 3172: {'c': 'Blanc'}, 3171: {'c': 'Bois blanc'}, 2098: {'c': 'Bois'}, 2099: {'c': 'Blanc'},
              3657: {'c': 'Blanc'}, 3669: {'c': 'Blanc'}, 3627: {'c': 'Blanc'}, 4033: {'s': '140x70'},
              2462: {'c': 'Blanc / bois'}, 2463: {'c': 'Tilleul'}, 2434: {'c': 'Tilleul'},
              3900: {'s': '0-6 mois'}, 3901: {'s': '6-24 mois'}, 3974: {'c': 'Rose'}, 3975: {'c': 'Vert'},
              3976: {'c': 'Citron'}, 2896: {'c': 'Écru'}, 2421: {'c': 'Bleu tilleul'},
              2362: {'s': '90x190 et 140x190'}, 2361: {'s': '90x190 et 140x190'},
              2366: {'s': '90x200 et 140x200'}, 2365: {'s': '90x200 et 140x200'}}
-EXCLUDE = {4034}  # doublon de 4033 (même prix, titre différent) : à valider avant d’inclure
+EXCLUDE = set()  # 4034 n'est pas un doublon de 4033 : c'est le trio Access Bois Blanc (2809 + 2810 + 2811)
 
 
 def family_of(r):
@@ -239,11 +240,17 @@ def comp_of(r, legacy=False):
     # ensembles dont le titre ne dit ni « duo » ni « trio » (« Chambre bébé évolutive … Lit … et Commode ») :
     # reconnus par leur catégorie ou leur titre ; le contenu réel du pack tranche ensuite duo / trio
     cat = r['link'].split('/fr/', 1)[-1].split('/', 1)[0]
+    # « Pack chambre bébé complète lit …, commode et armoire » : ensemble sans « duo » / « trio » dans le titre
+    if not legacy and t.startswith('pack') and re.search(r'\blit\b', t) and re.search(r'\bcommode\b', t):
+        return 'trio' if re.search(r'\barmoire\b', t) else 'duo'
     if not legacy and (cat in SET_CATEGORIES or (t.startswith('chambre bebe') and re.search(r'\blit\b', t))):
         if cat == 'nos-chambres-completes-trio' or 'armoire' in t:
             return 'trio'
         return 'duo'
     if t.startswith('pack commode') and 'plan a langer' in t:
+        return 'pack'
+    # nouveaux packs PrestaShop « Commode … et dispositif à langer … » : le contenu réel du pack tranche ensuite
+    if not legacy and re.match(r'(petite )?commode\b', t) and re.search(r'\b(dispositif|plan) a langer\b', t):
         return 'pack'
     if re.match(r'(petite )?commode\b', t) and 'ilot' not in t:
         return 'commode'

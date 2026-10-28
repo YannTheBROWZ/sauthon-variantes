@@ -7,12 +7,29 @@ veille et GitHub envoie un e-mail d'échec au propriétaire du dépôt.
 import datetime
 import json
 import os
+import re
 import sys
 
 SEUIL_BAISSE = 0.75          # on refuse une baisse de plus de 25 % d'une nuit sur l'autre
 MIN_FLUX = 800               # le flux compte ~1 550 produits
 MIN_GROUPES = 100            # ~205 groupes aujourd'hui
 MIN_POUR_COMPLETER = 50      # ~92 fiches avec l'encart « Pour compléter » aujourd'hui
+MIN_COMPOSITIONS = 120       # ~203 fiches avec composition aujourd'hui
+
+# Mêmes règles de format et mêmes plafonds que les balises GTM : un fichier qu'elles refuseraient
+# n'est jamais publié (la version de la veille reste en ligne). Toujours fullmatch, jamais match avec « $ ».
+RE_SEG = re.compile(r'[A-Za-z0-9_-]{1,200}')
+RE_BAD = re.compile(r'[\x00-\x1f\x7f-\x9f\u200b-\u200f\u2028-\u202e\u2060-\u2069\ufeff<>@]|://|www\.', re.I)
+MAX_DIMS, MAX_MEMBRES, MAX_VALEURS, MAX_OPTIONS = 6, 60, 30, 10
+MAX_CARACTERES_VARIANTES, MAX_CARACTERES_PC = 300000, 50000
+
+
+def est_id(n):
+    return isinstance(n, int) and not isinstance(n, bool) and 0 < n < 10**7
+
+
+def est_txt(s):
+    return isinstance(s, str) and 1 <= len(s) <= 40 and not RE_BAD.search(s)
 
 new = json.load(open('variants_data.json'))
 rows = json.load(open('rows.json'))
@@ -52,6 +69,32 @@ if pc is not None:
     if sans_nom:
         errors.append(f'Pour compléter : plans à langer sans nom : {sans_nom}')
 
+# format attendu par les balises
+hors_format = [c for c in new['c'] if not (isinstance(c, str) and RE_SEG.fullmatch(c))]
+hors_format += [t for t in new['v'] + new['l'] if not est_txt(t)]
+hors_format += [k for k, p in new['p'].items() if not (
+    re.fullmatch(r'\d{1,7}', k) and isinstance(p[0], int) and 0 <= p[0] < len(new['c'])
+    and (est_id(p[1]) or (isinstance(p[1], str) and RE_SEG.fullmatch(p[1])))
+    and (p[2] == 0 or est_id(p[2])))]
+if hors_format:
+    errors.append(f'Données hors format (la balise refuserait tout le fichier) : {hors_format[:10]}')
+trop = [i for i, g in enumerate(new['g'])
+        if len(g[0]) > MAX_DIMS or len(g[2]) > MAX_MEMBRES or any(len(o) > MAX_VALEURS for o in g[1])]
+if trop:
+    errors.append(f'Groupes hors plafonds (ignorés par la balise) : {trop[:10]}')
+if any(len(lst) > MAX_OPTIONS for lst in new['xl']):
+    errors.append('Composition hors plafond (ignorée par la balise).')
+if len(new['x']) < MIN_COMPOSITIONS:
+    errors.append(f'Trop peu de fiches avec composition : {len(new["x"])} (minimum {MIN_COMPOSITIONS}).')
+if len(json.dumps(new, ensure_ascii=False, separators=(',', ':'))) > MAX_CARACTERES_VARIANTES:
+    errors.append(f'variantes.json dépasserait {MAX_CARACTERES_VARIANTES} caractères (refusé par la balise).')
+if pc is not None:
+    bad = [k for k, v in pc['map'].items() if not (re.fullmatch(r'\d{1,7}', k) and re.fullmatch(r'\d{1,7}', str(v)))]
+    if bad:
+        errors.append(f'Pour compléter : identifiants hors format : {bad[:10]}')
+    if len(json.dumps(pc, ensure_ascii=False, separators=(',', ':'))) > MAX_CARACTERES_PC:
+        errors.append(f'pour-completer.json dépasserait {MAX_CARACTERES_PC} caractères (refusé par la balise).')
+
 # cohérence interne : tout produit référencé doit avoir son URL
 refs = {m[0] for g in new['g'] for m in g[2]} | {t for lst in new['xl'] for _, t in lst} | {int(k) for k in new['x']}
 missing = sorted(i for i in refs if str(i) not in new['p'])
@@ -73,6 +116,13 @@ status = {
 print(json.dumps(status, ensure_ascii=False, indent=2))
 if errors:
     sys.exit(1)
+
+# Date de génération lue par les balises : au-delà de 7 jours (variantes) ou 14 jours (Pour compléter),
+# elles n'affichent plus rien et le site revient seul à son état d'origine si la tâche nocturne s'arrête.
+genere = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
+new['t'] = genere
+if pc is not None:
+    pc['t'] = genere
 
 with open('../docs/variantes.json', 'w') as f:
     json.dump(new, f, ensure_ascii=False, separators=(',', ':'))

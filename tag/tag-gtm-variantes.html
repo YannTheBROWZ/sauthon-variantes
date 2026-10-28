@@ -1,7 +1,7 @@
 <!--
   Sauthon · Sélecteurs de variantes (couleur, taille, autres) + composition (commode / duo / trio)
-  Tag HTML personnalisé GTM — les données sont chargées depuis GitHub Pages et régénérées chaque nuit
-  à partir du flux produits (dépôt github.com/YannTheBROWZ/sauthon-variantes).
+  Tag HTML personnalisé GTM — les données sont servies par docs.sauthon.com (copie des fichiers régénérés chaque nuit
+  à partir du flux produits dans le dépôt github.com/YannTheBROWZ/sauthon-variantes).
   Déclencheur conseillé : DOM prêt, sur les fiches produit.
 -->
 <style>
@@ -50,9 +50,15 @@
     showComposition: true,
     compositionTitle: 'Composition',
     newTab: false,           // false : un clic sur une variante ouvre la fiche dans l'onglet en cours (true : nouvel onglet)
-    // Données régénérées chaque nuit par GitHub Actions à partir du flux produits
-    dataUrl: 'https://yannthebrowz.github.io/sauthon-variantes/variantes.json',
-    maxWaitMs: 5000          // au-delà, on n'affiche pas le bloc (évite un saut de mise en page tardif)
+    // Données régénérées chaque nuit par GitHub Actions à partir du flux produits, servies par le serveur de Sauthon
+    dataUrl: 'https://docs.sauthon.com/CRO/variantes.json',
+    maxWaitMs: 5000,         // au-delà, on n'affiche pas le bloc (évite un saut de mise en page tardif)
+    lateMs: 1500,            // au-delà, on n'insère que si la zone n'est pas déjà sous les yeux du visiteur
+    maxBytes: 300000,        // fichier de données refusé au-delà (49 Ko aujourd'hui)
+    maxAgeDays: 7,           // données plus anciennes (tâche nocturne en panne) : rien n'est affiché · 0 = sans limite
+    // Plafonds d'affichage par fiche (données réelles : 3 dimensions, 12 membres, 5 valeurs, 5 options au plus)
+    maxDims: 6, maxMembers: 60, maxValues: 30, maxOptions: 10,
+    version: '2026-10-28'    // reporté dans data-version du bloc et dans la note de version GTM
   };
   /* =============== FIN CONFIGURATION =============== */
 
@@ -63,6 +69,22 @@
   var lang = ps.language && ps.language.iso_code;
   if (lang && CONFIG.languages.indexOf(lang) === -1) return;
   if (document.getElementById('spv-block')) return;
+  if (!window.fetch || !window.Promise) return;   // navigateur trop ancien : la fiche reste telle quelle
+
+  // Feuille de style de la balise réellement appliquée ? (sinon : CSP style-src stricte, on n'affiche rien)
+  var probe = document.createElement('div');
+  probe.className = 'spv';
+  body.appendChild(probe);
+  var cssOk = window.getComputedStyle(probe).display === 'flex';
+  body.removeChild(probe);
+  if (!cssOk) return;
+
+  // Remontée des pannes silencieuses (aucune donnée personnelle : étape + message technique court)
+  function report(etape, e) {
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({ event: 'cro_balise_erreur', cro_balise: 'variantes', cro_etape: etape,
+      cro_erreur: String((e && e.message) || e || '').slice(0, 100) });
+  }
 
   var idInput = document.getElementById('product_page_product_id');
   var idMatch = /(?:^|\s)product-id-(\d+)(?:\s|$)/.exec(body.className);
@@ -70,15 +92,90 @@
   if (!pid) return;
 
   var started = new Date().getTime();
-  fetch(CONFIG.dataUrl, { credentials: 'omit' })
+  fetch(CONFIG.dataUrl, { credentials: 'omit', referrerPolicy: 'no-referrer' })
     .then(function (r) {
       if (!r.ok) throw new Error('HTTP ' + r.status);
-      return r.json();
+      return r.text();
     })
-    .then(function (data) {
-      if (new Date().getTime() - started > CONFIG.maxWaitMs) return;
+    .then(function (txt) {
+      var elapsed = new Date().getTime() - started;
+      if (elapsed > CONFIG.maxWaitMs) return report('delai', elapsed + ' ms');
+      if (txt.length > CONFIG.maxBytes) return report('taille', txt.length + ' caracteres');
+      var data = JSON.parse(txt);
+      if (!valid(data)) return report('format', 'donnees hors format');
+      if (CONFIG.maxAgeDays && typeof data.t === 'number' &&
+          new Date().getTime() / 1000 - data.t > CONFIG.maxAgeDays * 86400) return report('perime', String(data.t));
+      if (pousseVue(insertionY(), elapsed)) return;   // le visiteur regarde déjà cette zone : pas d'insertion
       build(data);
-    })['catch'](function () { /* données indisponibles : la fiche reste telle quelle */ });
+    })['catch'](function (e) { report('donnees', e); });
+
+  /* ---- Contrôle du format des données (tout ou rien) ----
+     Les URL ne sont construites qu'avec des segments [A-Za-z0-9_-] et des entiers ; libellés courts,
+     sans caractère de contrôle / invisible / bidi, sans < > @ ni adresse web. Mêmes règles dans generateur/verifier.py. */
+  var RE_SEG = /^[A-Za-z0-9_-]{1,200}$/;
+  var RE_BAD = /[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u2028-\u202E\u2060-\u2069\uFEFF<>@]|:\/\/|www\./i;
+  function isTxt(s) { return typeof s === 'string' && s.length >= 1 && s.length <= 40 && !RE_BAD.test(s); }
+  function own(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
+  function isArr(a) { return Object.prototype.toString.call(a) === '[object Array]'; }
+  function isId(n) { return typeof n === 'number' && n > 0 && n < 1e7 && n % 1 === 0; }
+  function isIdx(n, a) { return typeof n === 'number' && n >= 0 && n % 1 === 0 && n < a.length; }
+  function valid(D) {
+    var i, j, k, p, g;
+    if (!D || !isArr(D.c) || !isArr(D.v) || !isArr(D.l) || !isArr(D.g) || !isArr(D.xl) ||
+        !D.p || typeof D.p !== 'object' || !D.x || typeof D.x !== 'object') return false;
+    for (i = 0; i < D.c.length; i++) if (typeof D.c[i] !== 'string' || !RE_SEG.test(D.c[i])) return false;
+    for (i = 0; i < D.v.length; i++) if (!isTxt(D.v[i])) return false;
+    for (i = 0; i < D.l.length; i++) if (!isTxt(D.l[i])) return false;
+    for (k in D.p) {
+      if (!own(D.p, k)) continue;
+      p = D.p[k];
+      if (!/^\d{1,7}$/.test(k) || !isArr(p) || !isIdx(p[0], D.c) || !(p[2] === 0 || isId(p[2])) ||
+          !(isId(p[1]) || (typeof p[1] === 'string' && RE_SEG.test(p[1])))) return false;
+    }
+    for (i = 0; i < D.g.length; i++) {
+      g = D.g[i];
+      if (!isArr(g) || !isArr(g[0]) || !isArr(g[1]) || !isArr(g[2]) || g[0].length < 1 || g[1].length !== g[0].length) return false;
+      for (j = 0; j < g[0].length; j++) {
+        if (!isIdx(g[0][j], D.v) || !isArr(g[1][j])) return false;
+        for (k = 0; k < g[1][j].length; k++) if (!isIdx(g[1][j][k], D.v)) return false;
+      }
+      for (j = 0; j < g[2].length; j++) {
+        if (!isArr(g[2][j]) || g[2][j].length !== g[0].length + 1 || !isId(g[2][j][0]) || !own(D.p, g[2][j][0])) return false;
+        for (k = 1; k < g[2][j].length; k++) if (!isIdx(g[2][j][k], D.v)) return false;
+      }
+    }
+    for (i = 0; i < D.xl.length; i++) {
+      if (!isArr(D.xl[i])) return false;
+      for (j = 0; j < D.xl[i].length; j++) {
+        p = D.xl[i][j];
+        if (!isArr(p) || !isIdx(p[0], D.l) || !isId(p[1]) || !own(D.p, p[1])) return false;
+      }
+    }
+    for (k in D.x) if (own(D.x, k) && (!/^\d{1,7}$/.test(k) || !isIdx(D.x[k], D.xl))) return false;
+    return true;
+  }
+
+  /* ---- Pas d'insertion tardive sous les yeux du visiteur (évite un décalage de mise en page) ---- */
+  function actionsEl() {
+    return document.querySelector('.js-product-actions') || document.querySelector('.product-actions') ||
+      (document.getElementById('add-to-cart-or-refresh') || {}).parentNode || null;
+  }
+  function insertionY() {
+    var prices = document.querySelector('.js-product-prices');
+    var actions = actionsEl();
+    return prices ? prices.getBoundingClientRect().bottom : actions ? actions.getBoundingClientRect().top : Infinity;
+  }
+  function pousseVue(y, elapsed) {
+    var h = window.innerHeight || document.documentElement.clientHeight || 0;
+    var scrolled = (window.pageYOffset || document.documentElement.scrollTop || 0) > 0;
+    return y < h && (scrolled || elapsed > CONFIG.lateMs);
+  }
+  // Plafonds d'affichage : un groupe hors plafonds est ignoré sur cette fiche (ni gel, ni bloc géant)
+  function groupOk(g) {
+    if (g[0].length > CONFIG.maxDims || g[2].length > CONFIG.maxMembers) return false;
+    for (var i = 0; i < g[1].length; i++) if (g[1][i].length > CONFIG.maxValues) return false;
+    return true;
+  }
 
   function build(D) {
     if (document.getElementById('spv-block')) return;
@@ -93,8 +190,17 @@
         }
       }
     }
-    var compo = CONFIG.showComposition && D.x[pid] !== undefined ? D.xl[D.x[pid]] : null;
+    if (me && !groupOk(group)) { me = null; group = null; }
+    var compo = CONFIG.showComposition && own(D.x, pid) ? D.xl[D.x[pid]] : null;
+    if (compo && compo.length > CONFIG.maxOptions) compo = null;
     if (!me && !compo) return;
+
+    // Essai A/B (optionnel, inactif tant que le générateur ne publie pas « ab ») : D.ab[id] = 0 témoin / 1 actif
+    if (D.ab && own(D.ab, pid)) {
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({ event: 'variantes_exposition', variantes: { product_id: pid, groupe_ab: D.ab[pid] ? 'actif' : 'temoin' } });
+      if (!D.ab[pid]) return;
+    }
 
     var base = (ps.urls.base_url || '/') + (lang ? lang + '/' : '');
 
@@ -151,6 +257,7 @@
 
     var block = el('div', 'spv');
     block.id = 'spv-block';
+    block.setAttribute('data-version', CONFIG.version);
 
     // ---------- Section 1 : variantes du même produit ----------
     if (me) {
@@ -256,10 +363,11 @@
 
     // ---------- Placement ----------
     function mount() {
-      if (block.parentNode) return;
-      var actions = document.querySelector('.product-actions') ||
-        (document.getElementById('add-to-cart-or-refresh') || {}).parentNode;
+      if (document.body.contains(block)) return;
+      var actions = actionsEl();
       if (!actions || !actions.parentNode) return;
+      var stale = document.getElementById('spv-block');   // copie périmée laissée par un re-rendu du thème
+      if (stale && stale !== block && stale.parentNode) stale.parentNode.removeChild(stale);
       var col = actions.parentNode;
       var prices = null;
       if (CONFIG.position === 'apres-prix') {
@@ -271,6 +379,9 @@
       else col.insertBefore(block, actions);
     }
     mount();
+    if (!block.parentNode) return report('ancre', 'emplacement introuvable');
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({ event: 'variantes_impression', variantes: { product_id: pid } });
     if (typeof ps.on === 'function') ps.on('updatedProduct', mount);
   }
 })();
