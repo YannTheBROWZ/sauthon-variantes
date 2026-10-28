@@ -1,20 +1,20 @@
 {
-  "genere_le": "2026-10-28T09:37:16Z",
-  "produits_flux": 1600,
-  "produits_relies": 705,
-  "groupes_variantes": 205,
-  "fiches_composition": 200,
-  "packs_lus": "104/108",
+  "genere_le": "2026-10-28T14:40:33Z",
+  "produits_flux": 1599,
+  "produits_relies": 727,
+  "groupes_variantes": 206,
+  "fiches_composition": 224,
+  "packs_lus": "127/131",
   "packs_supprimes": [],
   "pour_completer": {
-    "fiches": 98,
+    "fiches": 100,
     "plans": 24,
     "ajouts_auto": [
       {
         "fiche": 2569,
         "titre": "COMMODE 1 PORTE 3 TIROIRS 1 NICHE VERSION GRIS VOLCAN BOREALE",
         "plan": 2571,
-        "nom_plan": "Dispositif à langer 15kg Gris Volcan Boreale",
+        "nom_plan": "Dispositif à langer Boréale Gris Volcan",
         "source": "accessoire PrestaShop"
       },
       {
@@ -28,8 +28,15 @@
     "retraits": [],
     "a_valider": [
       2098,
-      4034,
-      4037
+      4112,
+      4116,
+      4124,
+      4133,
+      4137,
+      4138,
+      4142,
+      4143,
+      4153
     ]
   },
   "statut": "ok",
