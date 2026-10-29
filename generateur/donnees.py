@@ -19,6 +19,8 @@ def size_display(v):
     return v + ' cm' if re.fullmatch(r'\d+x\d+', v or '') else (v.replace(' et ', ' et ') + ' cm' if re.fullmatch(r'\d+x\d+ et \d+x\d+', v or '') else v)
 
 
+# ordre d'affichage imposé pour certaines valeurs (sinon ordre alphabétique) : Basic, ordre validé le 29/10/2026
+ORDRE_VALEURS = {'Boutons boule blanc': 0, 'Boutons étoile gris': 1, 'Boutons cœur rose': 2}
 BED = {'lit', 'duo', 'trio', 'duo_armoire'}
 values, vindex = [], {}
 
@@ -34,7 +36,7 @@ out_groups = []
 review_groups = []
 for gi, g in enumerate(groups):
     dims, mem = g['dims'], g['members']
-    vk = lambda d, v: size_key(v) if d == 's' else (0, norm(v), 0)
+    vk = lambda d, v: size_key(v) if d == 's' else (0, (ORDRE_VALEURS.get(v, 9), norm(v)), 0)
     mem = sorted(mem, key=lambda m: tuple(vk(d, m[d]) for d in dims))
     labels = []
     for d in dims:

@@ -1,0 +1,31 @@
+name: Surveiller la copie Sauthon (docs.sauthon.com)
+
+# Les tags GTM lisent les données sur docs.sauthon.com (copie faite par le serveur de Sauthon).
+# Cette tâche échoue, et GitHub envoie un e-mail, si la copie n'est plus lisible depuis www.sauthon.com (CORS),
+# si elle est trop vieille, ou si le certificat HTTPS expire bientôt. Détail dans le résumé de chaque exécution.
+on:
+  schedule:
+    # Horaires indicatifs : GitHub décale souvent les tâches planifiées de plusieurs heures.
+    - cron: '37 12 * * *'
+    - cron: '37 19 * * *'
+  workflow_dispatch:         # bouton « Run workflow » pour un contrôle immédiat
+
+permissions:
+  contents: read
+
+jobs:
+  surveiller:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # « 0 » tant que le serveur de Sauthon n'est pas synchronisé automatiquement : alerte seulement quand la copie
+      # approche la coupure des tags (5 jours). Passer à « 1 » dès que sa synchronisation horaire tourne :
+      # alerte si une génération GitHub n'est pas copiée sous 3 h, ou si la copie a plus de 36 h.
+      SURV_SYNCHRO_AUTO: '0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Contrôler docs.sauthon.com
+        run: python surveillance/surveiller.py

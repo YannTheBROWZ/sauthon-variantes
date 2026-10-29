@@ -135,7 +135,10 @@ OVERRIDES = {4034: {'c': 'Bois blanc', 's': '140x70'}, 3383: {'c': 'Blanc'}, 317
              3937: {'c': 'Bois'}, 3938: {'c': 'Caramel'}, 3939: {'c': 'Sauge'}, 3940: {'c': 'Terracotta'},
              3941: {'c': 'Bois'}, 3942: {'c': 'Caramel'}, 3943: {'c': 'Sauge'}, 3944: {'c': 'Terracotta'},
              3951: {'c': 'Arty'}, 3948: {'c': 'Mokka'}, 3923: {'c': 'My Love'}, 2377: {'c': 'Seventies'},
-             3021: {'c': 'Gris'},
+             # Basic : seuls les boutons changent (le meuble reste blanc) ; libellés validés le 29/10/2026
+             3023: {'c': 'Boutons boule blanc'}, 3024: {'c': 'Boutons cœur rose'}, 3025: {'c': 'Boutons étoile gris'},
+             3026: {'c': 'Boutons boule blanc'}, 3027: {'c': 'Boutons cœur rose'}, 3028: {'c': 'Boutons étoile gris'},
+             3020: {'c': 'Boutons cœur rose'}, 3021: {'c': 'Boutons étoile gris'},
              3296: {'c': 'Nuages'}, 3297: {'c': 'Maison'}, 3298: {'c': 'Ours'}, 3299: {'c': 'Ours'},
              2684: {'c': 'Motif floral'}, 2686: {'c': 'Motif floral'},
              2739: {'c': 'Motif végétal'}, 2742: {'c': 'Motif végétal'}, 2743: {'c': 'Motif végétal'}}
