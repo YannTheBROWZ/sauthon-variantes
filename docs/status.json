@@ -1,14 +1,14 @@
 {
-  "genere_le": "2026-10-30T09:58:52Z",
-  "produits_flux": 1597,
-  "produits_relies": 753,
-  "groupes_variantes": 210,
-  "fiches_composition": 229,
-  "packs_lus": "124/128",
+  "genere_le": "2026-10-30T16:22:14Z",
+  "produits_flux": 1592,
+  "produits_relies": 768,
+  "groupes_variantes": 215,
+  "fiches_composition": 225,
+  "packs_lus": "123/127",
   "packs_supprimes": [],
   "pour_completer": {
-    "fiches": 100,
-    "plans": 24,
+    "fiches": 106,
+    "plans": 26,
     "ajouts_auto": [
       {
         "fiche": 2569,
@@ -28,17 +28,12 @@
     "retraits": [],
     "a_valider": [
       2098,
-      4112,
-      4116,
       4124,
       4133,
-      4137,
-      4138,
-      4142,
-      4143,
       4153
     ]
   },
+  "encart_fiches": 362,
   "statut": "ok",
   "erreurs": []
 }
