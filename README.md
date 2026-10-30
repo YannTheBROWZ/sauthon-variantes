@@ -22,8 +22,11 @@ affichés sur les fiches produit de [sauthon.com](https://www.sauthon.com) par u
 
 ## Encart « Pour compléter »
 
-Le second tag GTM ([tag/tag-gtm-pour-completer.html](tag/tag-gtm-pour-completer.html)) propose le plan à langer
-assorti sous le bouton panier des commodes, duos et trios. Sa table est publiée à chaque génération dans
+Le second tag GTM ([tag/tag-gtm-pour-completer.html](tag/tag-gtm-pour-completer.html)) propose sous le bouton panier
+jusqu'à 3 produits : le plan à langer assorti, les matelas (`generateur/matelas.py`, à partir des fiches lues par
+`generateur/lire_fiches_matelas.py`) et les compléments demandés par Sauthon par référence produit — draps housse,
+housses de matelas à langer, panières… (`generateur/complements_regles.py`), assemblés par `generateur/encart.py`
+(liste « l » du fichier publié). Sa table des plans est publiée à chaque génération dans
 <https://yannthebrowz.github.io/sauthon-variantes/pour-completer.json> par `generateur/pour_completer.py` :
 
 - elle part des correspondances validées (`TABLE_VALIDEE` dans `generateur/pour_completer_regles.py`) ;

@@ -145,16 +145,16 @@ TABLE_VALIDEE = {
     3429: 3215,  # Trio lit 120x60 + commode + armoire Vanille
     4034: 2814,  # Chambre bébé trio Access Bois Blanc (2809 + 2810 + 2811) : plan non inclus (règle : sauf mention dans le titre, jamais de plan dans un duo / trio)
     4037: 3921,  # Chambre bébé duo évolutive My Love (3919 + 3920) : plan non inclus (même règle)
+    4112: 4114,  # COMMODE 4 TIROIRS CHOCO — validé par la cliente le 30/10/2026
+    4142: 4114,  # Pack duo lit bébé évolutif 140x70 et commode 4 tiroirs CHOCO — validé par la cliente le 30/10/2026
+    4143: 4114,  # Pack chambre bébé complète lit évolutif 140x70, commode et armoire CHOCO — validé par la cliente le 30/10/2026
+    4116: 4118,  # COMMODE 6 TIROIRS BOHEME — validé par la cliente le 30/10/2026
+    4137: 4118,  # Pack duo lit bébé évolutif 140x70 et commode 6 tiroirs BOHÈME — validé par la cliente le 30/10/2026
+    4138: 4118,  # Pack chambre bébé complète lit évolutif 140x70, commode et armoire BOHÈME — validé par la cliente le 30/10/2026
 }
 
 A_VALIDER = {
     # Nouveautés d'octobre : PrestaShop vend la paire commode + plan en pack, mais rien ne relie automatiquement ces fiches
-    4112: 4114,  # COMMODE 4 TIROIRS CHOCO
-    4142: 4114,  # Pack duo lit bébé évolutif 140x70 et commode 4 tiroirs CHOCO
-    4143: 4114,  # Pack chambre bébé complète lit évolutif 140x70, commode et armoire CHOCO
-    4116: 4118,  # COMMODE 6 TIROIRS BOHEME
-    4137: 4118,  # Pack duo lit bébé évolutif 140x70 et commode 6 tiroirs BOHÈME
-    4138: 4118,  # Pack chambre bébé complète lit évolutif 140x70, commode et armoire BOHÈME
     4124: 4125,  # COMMODE XXL MOKKA
     4153: 4125,  # Pack duo lit bébé évolutif 140x70 et commode XXL 5 tiroirs MOKKA
     4133: 4134,  # COMMODE XXL 6 TIROIRS ARTY

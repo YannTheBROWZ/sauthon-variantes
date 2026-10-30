@@ -44,11 +44,14 @@ jobs:
           python flux.py
           python packs.py
 
-      - name: Regrouper les variantes, calculer « Pour compléter » et contrôler le résultat
+      - name: Regrouper les variantes, calculer « Pour compléter » (plan, matelas, compléments) et contrôler le résultat
         working-directory: generateur
         run: |
           python donnees.py
           python pour_completer.py
+          python lire_fiches_matelas.py
+          python matelas.py
+          python encart.py
           python verifier.py
 
       - name: Archiver les données dans le dépôt

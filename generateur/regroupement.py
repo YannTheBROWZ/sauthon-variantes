@@ -113,12 +113,18 @@ MERGES = [  # (ids, commentaire)
     ([3026, 3027, 3028], 'Armoire 2 portes Basic : boutons boule / cœur / étoile selon le coloris'),
     ([3020, 3021], 'Lit combiné évolutif 120x60 Basic : boutons cœur / étoile selon le coloris'),
     ([3194, 3230, 3246, 3262], 'Matelas à langer Uni : le titre Sauge ne dit pas « housse élastique »'),
+    # demandes de la cliente du 30/10/2026
+    ([2274, 11], 'Matelas Confort Baby 120x60 / 140x70'),
+    ([2960, 3289, 2962, 2959, 3870], 'Couffins et leur habillage : Promenons-nous, Orsino, Sunlight, Esmée, Petit Chou'),
+    ([2972, 1452, 1530, 1554, 1613, 1641, 1654, 1921], 'Appliques murales lumineuses des différentes collections'),
+    ([2970, 2985], 'Coussins Mila : triangle / carré'),
+    ([2980, 2987], 'Cadres photo Mila : rectangulaire / carré'),
     ([3296, 3297, 3298, 3299], 'Gigoteuses ouatinées Orsino : naissance Nuages, 0-6 mois Maison ou Ours, 6-24 mois Ours'),
     ([2684, 2685, 2686, 2687], 'Gigoteuses Esmée : motif floral et Terracotta dans un même sélecteur'),
     ([2739, 2740, 2741, 2742, 2743, 2744, 2745, 2746, 2747], 'Gigoteuses Promenons-nous : motif végétal, Tilleul, Jaune topaze'),
 ]
 # libellé du sélecteur « couleur » d'un regroupement (clé : 1er id du regroupement) : Couleur par défaut
-GROUP_ATTR = {3951: 'Modèle', 3296: 'Motif', 2684: 'Coloris', 2739: 'Coloris'}  # tout id du regroupement convient
+GROUP_ATTR = {3951: 'Modèle', 3296: 'Motif', 2684: 'Coloris', 2739: 'Coloris', 2960: 'Modèle', 2972: 'Modèle'}  # tout id du regroupement convient
 # produit affiché AUSSI dans le groupe d'un autre produit (sans quitter le sien) : {produit: (produit du groupe, valeurs)}
 # Sur la page du produit lui-même, la balise affiche son propre groupe (le 1er qui le contient).
 EXTRA_MEMBERS = {3134: (3126, {'c': 'Tout bois'})}   # client 28/10 : 3e couleur des lits FIRST = lit UP Chêne doré
@@ -139,6 +145,12 @@ OVERRIDES = {4034: {'c': 'Bois blanc', 's': '140x70'}, 3383: {'c': 'Blanc'}, 317
              3023: {'c': 'Boutons boule blanc'}, 3024: {'c': 'Boutons cœur rose'}, 3025: {'c': 'Boutons étoile gris'},
              3026: {'c': 'Boutons boule blanc'}, 3027: {'c': 'Boutons cœur rose'}, 3028: {'c': 'Boutons étoile gris'},
              3020: {'c': 'Boutons cœur rose'}, 3021: {'c': 'Boutons étoile gris'},
+             # demandes de la cliente du 30/10/2026
+             2960: {'c': 'Promenons-nous'}, 3289: {'c': 'Orsino'}, 2962: {'c': 'Sunlight'}, 2959: {'c': 'Esmée'},
+             3870: {'c': 'Petit Chou'},
+             2972: {'c': 'Mila'}, 1452: {'c': 'Babyfan'}, 1530: {'c': 'Timouki'}, 1554: {'c': 'Lazare'}, 1613: {'c': 'Hello'},
+             1641: {'c': 'Merlin'}, 1654: {'c': 'Miss Fleur de Lune'}, 1921: {'c': 'Chao Chao'},
+             2970: {'forme': 'Triangle'}, 2985: {'forme': 'Carré'}, 2980: {'forme': 'Rectangulaire'}, 2987: {'forme': 'Carré'},
              3296: {'c': 'Nuages'}, 3297: {'c': 'Maison'}, 3298: {'c': 'Ours'}, 3299: {'c': 'Ours'},
              2684: {'c': 'Motif floral'}, 2686: {'c': 'Motif floral'},
              2739: {'c': 'Motif végétal'}, 2742: {'c': 'Motif végétal'}, 2743: {'c': 'Motif végétal'}}

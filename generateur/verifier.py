@@ -15,6 +15,9 @@ MIN_FLUX = 800               # le flux compte ~1 550 produits
 MIN_GROUPES = 100            # ~205 groupes aujourd'hui
 MIN_POUR_COMPLETER = 50      # ~92 fiches avec l'encart « Pour compléter » aujourd'hui
 MIN_COMPOSITIONS = 120       # ~203 fiches avec composition aujourd'hui
+MIN_ENCART = 250             # ~420 fiches avec au moins une ligne dans l'encart (plan, matelas, compléments)
+MAX_LIGNES_ENCART = 3
+ROLES_ENCART = {'pl', 'ml', 'ma', 'so', 'ho', 'dr', 'pa', 'co'}
 
 # Mêmes règles de format et mêmes plafonds que les balises GTM : un fichier qu'elles refuseraient
 # n'est jamais publié (la version de la veille reste en ligne). Toujours fullmatch, jamais match avec « $ ».
@@ -94,6 +97,19 @@ if pc is not None:
         errors.append(f'Pour compléter : identifiants hors format : {bad[:10]}')
     if len(json.dumps(pc, ensure_ascii=False, separators=(',', ':'))) > MAX_CARACTERES_PC:
         errors.append(f'pour-completer.json dépasserait {MAX_CARACTERES_PC} caractères (refusé par la balise).')
+    # lignes de l'encart (encart.py) : [[id produit, rôle], ...] par fiche, MAX_LIGNES_ENCART au plus
+    lignes = pc.get('l')
+    if lignes is not None:
+        mal = [k for k, v in lignes.items() if not (
+            re.fullmatch(r'\d{1,7}', k) and isinstance(v, list) and 1 <= len(v) <= MAX_LIGNES_ENCART
+            and all(isinstance(x, list) and len(x) == 2 and est_id(x[0]) and x[1] in ROLES_ENCART and str(x[0]) != k for x in v)
+            and len({x[0] for x in v}) == len(v))]
+        if mal:
+            errors.append(f'Encart : lignes hors format : {mal[:10]}')
+        if len(lignes) < MIN_ENCART:
+            errors.append(f'Encart : trop peu de fiches avec des lignes ({len(lignes)}, minimum {MIN_ENCART}).')
+        if prev_pc and prev_pc.get('l') and len(lignes) < len(prev_pc['l']) * SEUIL_BAISSE:
+            errors.append(f'Encart : baisse anormale des fiches avec des lignes : {len(prev_pc["l"])} -> {len(lignes)}.')
 
 # cohérence interne : tout produit référencé doit avoir son URL
 refs = {m[0] for g in new['g'] for m in g[2]} | {t for lst in new['xl'] for _, t in lst} | {int(k) for k in new['x']}
@@ -110,6 +126,7 @@ status = {
     'packs_lus': f'{packs_lus}/{len(packs)}',
     'packs_supprimes': sorted(k for k, v in packs.items() if v.get('gone')),
     'pour_completer': pc_status,
+    'encart_fiches': len(pc.get('l', {})) if pc else None,
     'statut': 'erreur' if errors else 'ok',
     'erreurs': errors,
 }
