@@ -1,5 +1,5 @@
 {
-  "genere_le": "2026-10-30T18:54:15Z",
+  "genere_le": "2026-10-31T07:00:59Z",
   "produits_flux": 1593,
   "produits_relies": 768,
   "groupes_variantes": 215,
@@ -33,7 +33,41 @@
       4153
     ]
   },
-  "encart_fiches": 362,
+  "encart_fiches": 275,
+  "encart": {
+    "fiches": 275,
+    "lignes": 416,
+    "roles": {
+      "ml": 217,
+      "pl": 106,
+      "dr": 58,
+      "ho": 21,
+      "co": 3,
+      "pa": 10,
+      "ma": 1
+    },
+    "publiees_par_regle": {
+      "matelas_lit_demande": 217,
+      "plan": 106,
+      "complement_demande": 68,
+      "housse": 5,
+      "complement_herite": 20
+    },
+    "a_valider_par_regle": {
+      "matelas_lit_autre": 26,
+      "sommier": 11,
+      "matelas_langer_accessoire": 78,
+      "matelas_langer_defaut": 100,
+      "matelas_langer_a_confirmer": 23,
+      "matelas_langer_lit_combine": 31,
+      "matelas_lit_a_corriger": 2
+    },
+    "fiches_illisibles": [],
+    "lecture_degradee": false,
+    "listes_de_la_veille": 0,
+    "refs_inconnues": {},
+    "empreinte": "c5711e59fa65"
+  },
   "statut": "ok",
   "erreurs": []
 }
