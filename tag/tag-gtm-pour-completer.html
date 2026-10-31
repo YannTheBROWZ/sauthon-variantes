@@ -57,8 +57,12 @@
     timeoutMs: 6000,         // lecture d'un produit (au-delà, la ligne est retirée)
     slowCartMs: 10000,       // ajout au panier : pas d'abandon (comme le bouton natif), message d'attente au-delà
     cacheMinutes: 5,         // produit déjà lu dans la session (autre fiche visitée) : relu au plus toutes les 5 min
-    lazyMarginPx: 200,       // lecture des prix quand l'encart arrive à moins de 200 px de l'écran (sur mobile : quand
-                             // le visiteur descend vers le bouton panier ; sur ordinateur, l'encart est déjà visible)
+    // Lecture des prix : dès le premier geste du visiteur (défilement, toucher, clic, clavier), ou quand l'encart est à
+    // moins de lazyMarginPx de l'écran (ordinateur : 600 px, donc presque toujours dès l'affichage ; mobile : 200 px).
+    // Les produits sont prêts quand le visiteur arrive à l'encart ; un visiteur qui repart sans rien faire ne coûte
+    // aucune requête PrestaShop sur mobile.
+    lazyMarginPx: 600,
+    lazyMarginMobilePx: 200,
     impressionMaxMs: 4000,   // impression mesurée au plus tard 4 s après l'affichage de la première ligne
     // Produit déjà offert / inclus d'après le titre de la fiche (mentions promo temporaires, ex. « + plan à langer
     // offert ! », « + matelas offert ! », « (+ 2 draps offerts) ») : pas de ligne de ce rôle, les autres restent.
@@ -76,7 +80,7 @@
     lateMs: 1500,            // au-delà, on n'insère que si la zone n'est pas déjà sous les yeux du visiteur
     maxBytes: 50000,         // liste refusée au-delà (13 Ko aujourd'hui)
     maxAgeDays: 14,          // liste plus ancienne : pas d'encart · 0 = sans limite
-    version: '2026-10-30b',
+    version: '2026-10-31',
     // Un produit n'est proposé que si son titre PrestaShop, lu en direct, correspond au rôle annoncé par la liste
     // (pl plan à langer, ml matelas de lit / berceau, ma matelas à langer, so sommier, ho housse de matelas à langer,
     // dr draps housse, pa panière, co autre complément). Titres comparés en minuscules, sans accents.
@@ -568,23 +572,6 @@
       });
     }
 
-    // Lecture des prix à la première interaction (défilement, toucher, clic, clavier), ou tout de suite si l'encart
-    // est déjà visible : pas de requête PHP pour un visiteur qui repart sans rien faire.
-    function whenEngaged(cb) {
-      var evts = ['scroll', 'touchstart', 'pointerdown', 'keydown'];
-      var done = false;
-      var i;
-      function go() {
-        if (done) return;
-        done = true;
-        for (var j = 0; j < evts.length; j++) window.removeEventListener(evts[j], go, true);
-        cb();
-      }
-      var h = window.innerHeight || document.documentElement.clientHeight || 0;
-      if ((window.pageYOffset || document.documentElement.scrollTop || 0) > 0 || block.getBoundingClientRect().top < h) return go();
-      for (i = 0; i < evts.length; i++) window.addEventListener(evts[i], go, { passive: true, capture: true });
-    }
-
     mount();
     if (!block.parentNode) return report('ancre', 'emplacement introuvable');
     if (typeof ps.on === 'function') ps.on('updatedProduct', mount);
@@ -596,16 +583,29 @@
         query({ id_product: id, id_product_attribute: 0, action: 'refresh', ajax: 1, quantity_wanted: 1 });
     }
 
-    // Lecture des prix quand l'encart approche de l'écran (à moins de CONFIG.lazyMarginPx) : un visiteur mobile qui ne
-    // descend pas vers le bouton panier ne déclenche aucune requête
+    // Lecture des prix au premier geste du visiteur, ou quand l'encart approche de l'écran (voir CONFIG.lazyMarginPx)
     function whenNear(cb) {
-      if (!('IntersectionObserver' in window)) return whenEngaged(cb);
-      var io = new IntersectionObserver(function (entries) {
-        for (var i = 0; i < entries.length; i++) {
-          if (entries[i].isIntersecting) { io.disconnect(); cb(); return; }
-        }
-      }, { rootMargin: CONFIG.lazyMarginPx + 'px 0px' });
-      io.observe(block);
+      var evts = ['scroll', 'wheel', 'touchstart', 'pointerdown', 'keydown'];
+      var done = false, io = null, i;
+      function go() {
+        if (done) return;
+        done = true;
+        if (io) io.disconnect();
+        for (var j = 0; j < evts.length; j++) window.removeEventListener(evts[j], go, true);
+        cb();
+      }
+      for (i = 0; i < evts.length; i++) window.addEventListener(evts[i], go, { passive: true, capture: true });
+      var w = window.innerWidth || document.documentElement.clientWidth || 0;
+      var margin = w >= 768 ? CONFIG.lazyMarginPx : CONFIG.lazyMarginMobilePx;
+      if ('IntersectionObserver' in window) {
+        io = new IntersectionObserver(function (entries) {
+          for (var k = 0; k < entries.length; k++) if (entries[k].isIntersecting) return go();
+        }, { rootMargin: margin + 'px 0px' });
+        io.observe(block);
+      } else {
+        var h = window.innerHeight || document.documentElement.clientHeight || 0;
+        if ((window.pageYOffset || document.documentElement.scrollTop || 0) > 0 || block.getBoundingClientRect().top < h + margin) go();
+      }
     }
 
     // Cache de session : un produit lu et validé sur une fiche n'est pas relu pendant CONFIG.cacheMinutes sur les fiches
