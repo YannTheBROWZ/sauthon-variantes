@@ -6,3 +6,8 @@ generateur/pc_status.json
 generateur/variants_data.json
 generateur/variants_review.json
 __pycache__/
+generateur/fiches-matelas.json
+generateur/matelas_data.json
+generateur/matelas_review.json
+generateur/encart_status.json
+generateur/verif.json

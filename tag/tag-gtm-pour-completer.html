@@ -1,18 +1,20 @@
 <!--
-  Sauthon · Encart « Pour compléter » (plan à langer) sous le bouton panier
-  Tag HTML personnalisé GTM — la table fiche -> plan à langer est servie par docs.sauthon.com, copie du fichier recalculé
-  chaque nuit (dépôt github.com/YannTheBROWZ/sauthon-variantes, règles : generateur/pour_completer_regles.py).
-  Prix, stock et ajout au panier sont lus en direct sur PrestaShop.
+  Sauthon · Encart « Pour compléter » sous le bouton panier : plan à langer, matelas et compléments (draps housse,
+  housses de matelas à langer, panières…), 3 produits au plus.
+  Tag HTML personnalisé GTM — la liste des produits par fiche est servie par docs.sauthon.com, copie du fichier recalculé
+  chaque nuit (dépôt github.com/YannTheBROWZ/sauthon-variantes : generateur/pour_completer_regles.py, matelas.py,
+  complements_regles.py, encart.py). Prix, stock et ajout au panier sont lus en direct sur PrestaShop.
   Déclencheur conseillé : DOM prêt, sur les fiches produit.
 -->
 <style>
 .spc{margin:20px 0 4px;color:#1f1f1f;font-family:inherit}
 .spc__title{margin:0 0 10px;font-size:18px;line-height:1.3;font-weight:600;color:#8a5c4c}
+.spc__list{display:flex;flex-direction:column;gap:10px}
 .spc__item{display:flex;align-items:center;gap:14px;padding:12px;border:1px solid #eadfd8;border-radius:14px;background:#fff}
 .spc__img{flex:0 0 72px;width:72px;height:72px;border-radius:10px;overflow:hidden;background:#f6f1ee;display:block}
 .spc__img img{width:100%;height:100%;object-fit:contain;display:block}
 .spc__info{flex:1 1 auto;min-width:0}
-.spc__name{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:15px;line-height:1.35;font-weight:500;color:inherit;text-decoration:none}
+.spc__name{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:15px;line-height:1.35;font-weight:500;color:inherit;text-decoration:none}
 .spc__name:hover{text-decoration:underline}
 .spc__prices{margin-top:4px;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px}
 .spc__price{font-size:16px;font-weight:700}
@@ -31,7 +33,8 @@
 .spc__line{height:12px;border-radius:6px;margin:6px 0}
 .spc__line--l{width:75%}
 .spc__line--s{width:40%}
-.spc--loading .spc__img,.spc--loading .spc__line,.spc--loading .spc__add{background:linear-gradient(90deg,#f3ece8 25%,#faf6f3 50%,#f3ece8 75%);background-size:200% 100%;animation:spc-shimmer 1.2s infinite}
+@media (max-width:600px){.spc__item{min-height:112px}}
+.spc__item--loading .spc__img,.spc__item--loading .spc__line,.spc__item--loading .spc__add{background:linear-gradient(90deg,#f3ece8 25%,#faf6f3 50%,#f3ece8 75%);background-size:200% 100%;animation:spc-shimmer 1.2s infinite}
 .spc__spinner{width:18px;height:18px;border:2px solid rgba(31,31,31,.3);border-top-color:#1f1f1f;border-radius:50%;animation:spc-spin .7s linear infinite}
 .spc__sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 @keyframes spc-shimmer{to{background-position:-200% 0}}
@@ -46,26 +49,50 @@
   var CONFIG = {
     title: 'Pour compléter',
     languages: ['fr'],       // langues où l'encart s'affiche
+    maxLines: 3,             // produits proposés au plus (la liste publiée en compte 3 au plus)
     showLowestPrice: true,   // affiche « Dernier prix le plus bas » quand PrestaShop le fournit
     // Prix barré : 'conforme' = affiché seulement s'il est égal au prix le plus bas des 30 derniers jours (règle
-    // Omnibus) et supérieur au prix actuel, sinon prix actuel seul ; 'fiche' = comme la fiche du plan ; 'jamais'
+    // Omnibus) et supérieur au prix actuel, sinon prix actuel seul ; 'fiche' = comme la fiche du produit ; 'jamais'
     regularPrice: 'conforme',
-    timeoutMs: 10000,        // lecture du plan uniquement (l'ajout au panier attend la vraie réponse, comme le bouton natif)
-    lazyMarginPx: 600,       // lecture du prix du plan quand l'encart arrive à moins de 600 px de l'écran
-    // Pas d'encart si le titre de la fiche dit que le plan à langer est déjà offert / inclus
-    // (ex. « + plan à langer offert ! »). Vérifié à chaque affichage : l'encart revient dès que la mention est retirée.
-    hideWhenTitleMatches: /(plan|dispositif) [aà] langer (offert|inclus|compris|gratuit|en cadeau)|(\+|\bet\b|\bavec\b) ?(le |un |son )?(plan|dispositif) [aà] langer/,
+    timeoutMs: 6000,         // lecture d'un produit (au-delà, la ligne est retirée)
+    slowCartMs: 10000,       // ajout au panier : pas d'abandon (comme le bouton natif), message d'attente au-delà
+    cacheMinutes: 5,         // produit déjà lu dans la session (autre fiche visitée) : relu au plus toutes les 5 min
+    lazyMarginPx: 200,       // lecture des prix quand l'encart arrive à moins de 200 px de l'écran (sur mobile : quand
+                             // le visiteur descend vers le bouton panier ; sur ordinateur, l'encart est déjà visible)
+    impressionMaxMs: 4000,   // impression mesurée au plus tard 4 s après l'affichage de la première ligne
+    // Produit déjà offert / inclus d'après le titre de la fiche (mentions promo temporaires, ex. « + plan à langer
+    // offert ! », « + matelas offert ! », « (+ 2 draps offerts) ») : pas de ligne de ce rôle, les autres restent.
+    // Titre comparé en minuscules, sans accents ; vérifié à chaque affichage (la ligne revient quand la mention part).
+    hideRoles: {
+      pl: /(plan|dispositif) a langer (offert|inclus|compris|gratuit|en cadeau)|(\+|\bet\b|\bavec\b) ?(le |un |son )?(plan|dispositif) a langer/,
+      ml: /matelas (de lit |bebe )?(offert|inclus|compris|gratuit|en cadeau)|(\+|\bet\b|\bavec\b) ?(le |un |son )?matelas\b(?! a langer)/,
+      ma: /matelas a langer (offert|inclus|compris|gratuit|en cadeau)|(\+|\bet\b|\bavec\b) ?(le |un |son )?matelas a langer/,
+      dr: /draps?( housse)? (offerts?|inclus|compris|gratuits?|en cadeau)|\+ ?\d* ?draps?\b/
+    },
 
-    // Table fiche -> plan à langer, recalculée chaque nuit par GitHub Actions, servie par le serveur de Sauthon
+    // Liste fiche -> produits proposés, recalculée chaque nuit par GitHub Actions, servie par le serveur de Sauthon
     dataUrl: 'https://docs.sauthon.com/CRO/pour-completer.json',
-    maxWaitMs: 5000,         // table reçue au-delà : pas d'encart (évite un affichage tardif)
+    maxWaitMs: 5000,         // liste reçue au-delà : pas d'encart (évite un affichage tardif)
     lateMs: 1500,            // au-delà, on n'insère que si la zone n'est pas déjà sous les yeux du visiteur
-    maxBytes: 50000,         // table refusée au-delà (2 Ko aujourd'hui)
-    maxAgeDays: 14,          // table plus ancienne : pas d'encart · 0 = sans limite
-    version: '2026-10-28b',
+    maxBytes: 50000,         // liste refusée au-delà (13 Ko aujourd'hui)
+    maxAgeDays: 14,          // liste plus ancienne : pas d'encart · 0 = sans limite
+    version: '2026-10-30b',
+    // Un produit n'est proposé que si son titre PrestaShop, lu en direct, correspond au rôle annoncé par la liste
+    // (pl plan à langer, ml matelas de lit / berceau, ma matelas à langer, so sommier, ho housse de matelas à langer,
+    // dr draps housse, pa panière, co autre complément). Titres comparés en minuscules, sans accents.
+    roles: {
+      pl: /^\s*(grand )?(dispositif|plan) a langer\b/,
+      ml: /^\s*matelas\b(?!.*\ba langer\b)/,
+      ma: /^\s*matelas a langer\b/,
+      so: /^\s*sommier\b/,
+      ho: /\bhousse\b.*\blanger\b/,
+      dr: /\bdraps?\b/,
+      pa: /\bpanier/,
+      co: /\S/
+    },
     // Noms courts affichés, gérés ici (dans GTM) et non dans le JSON : le JSON choisit un id, jamais le nom affiché.
-    // Plan absent de cette liste : on affiche son titre PrestaShop lu en direct.
-    planNames: {
+    // Produit absent de cette liste : on affiche son titre PrestaShop lu en direct.
+    names: {
       '1583': 'Dispositif à langer Happy', '2094': 'Dispositif à langer Serena', '2101': 'Dispositif à langer Seventies',
       '2590': 'Dispositif à langer Boréale Bleu nuit', '2597': 'Dispositif à langer Arty',
       '2618': 'Dispositif à langer multi-positions Antonin', '2789': 'Dispositif à langer Access Bois',
@@ -78,8 +105,22 @@
       '3922': 'Plan à langer coulissant My Love XXL', '3927': 'Plan à langer multiposition Îlot bébé',
       '2571': 'Dispositif à langer Boréale Gris Volcan', '4114': 'Dispositif à langer coulissant Choco',
       '4118': 'Dispositif à langer coulissant Bohème', '4125': 'Dispositif à langer coulissant Mokka XXL',
-      '4134': 'Dispositif à langer coulissant Arty XXL'
-    }
+      '4134': 'Dispositif à langer coulissant Arty XXL',
+      '6': 'Sommier à lattes 90x190', '7': 'Sommier à lattes 90x200', '8': 'Matelas Montana 90x200',
+      '9': 'Matelas Montana 90x190', '11': 'Matelas 140x70 Confort Baby', '2274': 'Matelas 120x60 Confort Baby',
+      '4120': 'Matelas 100x50 Confort Baby', '2487': 'Matelas berceau Eclipse 90x50',
+      '2815': 'Housse de matelas à langer plus 2 linges Esmée',
+      '2816': 'Housse de matelas à langer plus 2 linges Promenons-nous',
+      // titres PrestaShop sans couleur (titre meta) ou avec coquille, trop longs sur mobile
+      '3194': 'Matelas à langer + housse + serviette uni Vanilla',
+      '3262': 'Matelas à langer + housse + serviette uni Terracotta',
+      '2500': 'Housse de matelas à langer 76x55 Jaune Topaze',
+      '3192': 'Drap housse uni Vanilla', '3244': 'Drap housse uni Sauge', '3260': 'Drap housse uni Terracotta',
+      '3199': 'Grande panière uni Vanilla', '3251': 'Grande panière uni Sauge', '3267': 'Grande panière uni Terracotta'
+    },
+    // Catégorie GA4 (item_category) de chaque rôle
+    roleLabels: { pl: 'Plan à langer', ml: 'Matelas de lit', ma: 'Matelas à langer', so: 'Sommier',
+      ho: 'Housse de matelas à langer', dr: 'Draps housse', pa: 'Panière', co: 'Complément' }
   };
   /* =============== FIN CONFIGURATION =============== */
 
@@ -105,13 +146,19 @@
     window.dataLayer.push({ event: 'cro_balise_erreur', cro_balise: 'pour_completer', cro_etape: etape,
       cro_erreur: String((e && e.message) || e || '').slice(0, 100) });
   }
+  function own(o, k) {
+    return !!o && Object.prototype.hasOwnProperty.call(o, k);
+  }
 
   var idInput = document.getElementById('product_page_product_id');
   var idMatch = /(?:^|\s)product-id-(\d+)(?:\s|$)/.exec(body.className);
   var productId = String((idInput && idInput.value) || (idMatch && idMatch[1]) || '');
   if (!productId) return;
-  // Plan à langer déjà offert / inclus d'après le titre de la fiche : pas d'encart (et aucune requête)
-  if (CONFIG.hideWhenTitleMatches && CONFIG.hideWhenTitleMatches.test(normalizeTitle(productTitle()))) return;
+  // Rôles déjà offerts / inclus d'après le titre de la fiche (voir CONFIG.hideRoles)
+  var pageTitle = normalizeTitle(productTitle());
+  function hiddenRole(role) {
+    return own(CONFIG.hideRoles, role) && CONFIG.hideRoles[role].test(pageTitle);
+  }
 
   var started = new Date().getTime();
   fetch(CONFIG.dataUrl, { credentials: 'omit', referrerPolicy: 'no-referrer' })
@@ -126,10 +173,34 @@
       var D = JSON.parse(txt);
       if (CONFIG.maxAgeDays && D && typeof D.t === 'number' &&
           new Date().getTime() / 1000 - D.t > CONFIG.maxAgeDays * 86400) return report('perime', String(D.t));
+      var lines = readLines(D);
+      if (!lines.length) return;
       var form = anchorEl();
       if (form && pousseVue(form.getBoundingClientRect().bottom, elapsed)) return;  // zone déjà sous les yeux du visiteur
-      start(D);
+      start(D, lines);
     })['catch'](function (e) { report('donnees', e); });
+
+  // Produits proposés pour cette fiche : liste « l » ([[id, rôle], …]), sinon ancienne table « map » (plan seul).
+  // Une entrée mal formée est ignorée (et signalée) ; ids en double et fiche elle-même écartés.
+  function readLines(D) {
+    var out = [], seen = {}, raw = null, i, x, id;
+    if (D && own(D.l, productId) && Array.isArray(D.l[productId])) {
+      raw = D.l[productId];
+    } else {
+      if (D && own(D.l, productId)) report('format', 'lignes');
+      if (!(D && own(D.map, productId))) return out;
+      raw = [[D.map[productId], 'pl']];
+    }
+    for (i = 0; i < raw.length && out.length < CONFIG.maxLines; i++) {
+      x = raw[i];
+      id = Array.isArray(x) && x.length >= 2 ? String(x[0]) : '';
+      if (!/^\d{1,7}$/.test(id) || !own(CONFIG.roles, x[1])) { report('format', 'ligne ' + i); continue; }
+      if (id === productId || own(seen, id) || hiddenRole(x[1])) continue;
+      seen[id] = true;
+      out.push({ id: id, role: x[1] });
+    }
+    return out;
+  }
 
   // Emplacement : sous le formulaire panier (crochets du cœur PrestaShop d'abord, classes de style ensuite)
   function anchorEl() {
@@ -153,26 +224,23 @@
     return s.replace(/[\u2019']/g, ' ').replace(/\s+/g, ' ');
   }
 
-  function start(D) {
-    var map = D && D.map;
-    if (!map || typeof map !== 'object' || !Object.prototype.hasOwnProperty.call(map, productId)) return;
-    var planId = String(map[productId]);
-    if (!/^\d{1,7}$/.test(planId)) return report('format', 'plan_id');
+  function start(D, lines) {
     if (document.getElementById('spc-block')) return;
-    // Le JSON choisit un id, jamais le nom affiché (nom court géré dans GTM, sinon titre PrestaShop)
-    var fixedName = Object.prototype.hasOwnProperty.call(CONFIG.planNames, planId) ? CONFIG.planNames[planId] : '';
-    // Un produit n'est proposé que si PrestaShop lui-même le titre « (grand) plan / dispositif à langer … »
-    var PLAN_TITLE = /^\s*(grand )?(dispositif|plan) [aà] langer\b/;
+    var planLine = null;
+    for (var p = 0; p < lines.length; p++) if (lines[p].role === 'pl') { planLine = lines[p]; break; }
 
     // Essai A/B (optionnel, inactif tant que le générateur ne publie pas « ab ») : D.ab[id] = 0 témoin / 1 actif
-    if (D.ab && Object.prototype.hasOwnProperty.call(D.ab, productId)) {
+    if (D.ab && own(D.ab, productId)) {
       window.dataLayer = window.dataLayer || [];
-      window.dataLayer.push({ event: 'pour_completer_exposition', pour_completer: { product_id: productId, plan_id: planId, groupe_ab: D.ab[productId] ? 'actif' : 'temoin' } });
+      window.dataLayer.push({ event: 'pour_completer_exposition', pour_completer: { product_id: productId,
+        plan_id: planLine ? planLine.id : '', groupe_ab: D.ab[productId] ? 'actif' : 'temoin' } });
       if (!D.ab[productId]) return;   // témoin : ni encart, ni requête PrestaShop
     }
 
     var ICON_PLUS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
     var ICON_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+    var SKELETON = '<span class="spc__img"></span><div class="spc__info"><div class="spc__line spc__line--l"></div>' +
+      '<div class="spc__line spc__line--s"></div></div><span class="spc__add"></span>';
     var HEADERS = {
       'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
       'Accept': 'application/json, text/javascript, */*; q=0.01',
@@ -181,15 +249,20 @@
 
     var block = document.createElement('section');
     block.id = 'spc-block';
-    block.className = 'spc spc--loading';
+    block.className = 'spc';
     block.setAttribute('aria-busy', 'true');
-    block.innerHTML =
-      '<p class="spc__title" role="heading" aria-level="2"></p>' +
-      '<div class="spc__item"><span class="spc__img"></span>' +
-      '<div class="spc__info"><div class="spc__line spc__line--l"></div><div class="spc__line spc__line--s"></div></div>' +
-      '<span class="spc__add"></span></div>';
-    block.querySelector('.spc__title').textContent = CONFIG.title;
     block.setAttribute('data-version', CONFIG.version);
+    block.innerHTML = '<p class="spc__title" role="heading" aria-level="2"></p><div class="spc__list"></div>' +
+      '<p class="spc__msg" role="status"></p>';
+    block.querySelector('.spc__title').textContent = CONFIG.title;
+    var list = block.querySelector('.spc__list');
+    var msg = block.querySelector('.spc__msg');   // région toujours présente, vide (et sans marge) tant qu'il n'y a rien à dire
+    for (var n = 0; n < lines.length; n++) {
+      lines[n].el = document.createElement('div');
+      lines[n].el.className = 'spc__item spc__item--loading';
+      lines[n].el.innerHTML = SKELETON;
+      list.appendChild(lines[n].el);
+    }
 
     var removed = false;
     function mount() {
@@ -204,16 +277,21 @@
       removed = true;
       if (block.parentNode) block.parentNode.removeChild(block);
     }
+    function drop(line) {   // produit écarté : sa ligne disparaît ; plus aucune ligne -> plus d'encart
+      line.dropped = true;
+      if (line.el && line.el.parentNode) line.el.parentNode.removeChild(line.el);
+      if (!list.children.length) unmount();
+    }
     function query(params) {
       var out = [];
       for (var k in params) {
-        if (Object.prototype.hasOwnProperty.call(params, k)) out.push(encodeURIComponent(k) + '=' + encodeURIComponent(params[k]));
+        if (own(params, k)) out.push(encodeURIComponent(k) + '=' + encodeURIComponent(params[k]));
       }
       return out.join('&');
     }
     function post(url, params, timeoutMs) {
       return new Promise(function (resolve, reject) {
-        // délai seulement si demandé : la lecture du plan en a un, l'ajout au panier non (comme le bouton natif)
+        // délai seulement si demandé : la lecture d'un produit en a un, l'ajout au panier non (comme le bouton natif)
         var timer = timeoutMs ? setTimeout(function () { reject(new Error('timeout')); }, timeoutMs) : null;
         fetch(url, { method: 'POST', credentials: 'same-origin', headers: HEADERS, body: query(params) })
           .then(function (r) {
@@ -227,13 +305,31 @@
     function clean(s) {
       return (s || '').replace(/\s+/g, ' ').trim();
     }
-    function pushEvent(name, extra) {
-      var payload = { product_id: productId, plan_id: planId, plan_name: plan.name, plan_price: plan.price };
-      for (var k in extra) {
-        if (Object.prototype.hasOwnProperty.call(extra, k)) payload[k] = extra[k];
-      }
+    // Événements : product_id + produit concerné ; plan_* conservés pour un plan à langer (compatibilité des rapports)
+    function itemPayload(line) {
+      var o = { item_id: line.id, item_role: line.role, item_name: line.data.name, item_price: line.data.price };
+      if (line.role === 'pl') { o.plan_id = line.id; o.plan_name = line.data.name; o.plan_price = line.data.price; }
+      return o;
+    }
+    // Le modèle de données GTM fusionne les objets poussés : on remet pour_completer à zéro avant chaque événement (un
+    // plan_id de l'impression resterait sinon sur l'ajout d'un matelas). L'ajout passe aussi par la balise GA4 du
+    // conteneur, qui envoie ecommerce.items et ecommerce.value : on y met le produit ajouté (sinon GA4 recevrait les
+    // articles de la fiche). L'impression n'y passe pas : ecommerce n'est pas touché (les variantes_click le lisent).
+    function pushEvent(name, payload, ecommerce) {
+      payload.product_id = productId;
       window.dataLayer = window.dataLayer || [];
-      window.dataLayer.push({ event: name, pour_completer: payload });
+      window.dataLayer.push(ecommerce ? { ecommerce: null, pour_completer: null } : { pour_completer: null });
+      var o = { event: name, pour_completer: payload };
+      if (ecommerce) o.ecommerce = ecommerce;
+      window.dataLayer.push(o);
+    }
+    function ecommerceOf(line) {
+      var price = amount(line.data.price);
+      var item = { item_id: line.id, item_name: line.data.name, item_category: CONFIG.roleLabels[line.role] || line.role,
+        item_list_id: 'pour_completer', item_list_name: CONFIG.title, quantity: 1 };
+      var e = { currency: (ps.currency && ps.currency.iso_code) || 'EUR', items: [item] };
+      if (!isNaN(price)) { item.price = price; e.value = price; }
+      return e;
     }
 
     // Premier montant suivi de « € » : « … bas : 1 234,56 € TTC » -> 1234.56
@@ -244,8 +340,8 @@
 
     // Mention « dernier prix le plus bas » (Omnibus) : classe du module, sinon repli sur le texte
     function lowestNotice(root) {
-      var n = root.querySelector('.omniversepricing-notice');
-      if (n) return clean(n.textContent);
+      var nEl = root.querySelector('.omniversepricing-notice');
+      if (nEl) return clean(nEl.textContent);
       var found = '';
       var all = root.querySelectorAll('span, p, div, small');
       for (var i = 0; i < all.length; i++) {
@@ -255,15 +351,15 @@
       return found;
     }
 
-    // Lit le plan à langer via le rafraîchissement produit natif de PrestaShop :
+    // Lit un produit via le rafraîchissement produit natif de PrestaShop :
     // prix, prix barré, « dernier prix le plus bas » et stock identiques à sa propre fiche.
-    function parsePlan(d) {
+    function parseProduct(d, id) {
       var tpl = document.createElement('template');
       tpl.innerHTML = (d.product_prices || '') + (d.product_cover_thumbnails || '') + (d.product_add_to_cart || '');
       var root = tpl.content;
       var text = function (sel) {
-        var n = root.querySelector(sel);
-        return n ? clean(n.textContent) : '';
+        var el = root.querySelector(sel);
+        return el ? clean(el.textContent) : '';
       };
 
       var price = '';
@@ -281,7 +377,8 @@
       var sized = /-(?:large|medium|home|small|cart)_default\//;
 
       return {
-        name: fixedName || clean(d.product_title).replace(/\s*[|–-]\s*Sauthon\s*$/i, ''),
+        // Le JSON choisit un id, jamais le nom affiché (nom court géré dans GTM, sinon titre PrestaShop)
+        name: own(CONFIG.names, id) ? CONFIG.names[id] : clean(d.product_title).replace(/\s*[|–-]\s*Sauthon\s*$/i, ''),
         url: d.product_url || '',
         price: price,
         regular: text('.product-price-regular .line-through'),
@@ -294,15 +391,10 @@
       };
     }
 
-    var plan = {};
-    var addBtn = null;
-    var msg = null;
-    var busy = false;
-
-    function render() {
-      block.className = 'spc';
-      block.removeAttribute('aria-busy');
-      var item = block.querySelector('.spc__item');
+    function render(line) {
+      var item = line.el;
+      var data = line.data;
+      item.className = 'spc__item';
       item.innerHTML =
         '<a class="spc__img"><img loading="lazy" width="72" height="72"></a>' +
         '<div class="spc__info"><a class="spc__name"></a>' +
@@ -310,98 +402,108 @@
         '<button type="button" class="spc__add"></button>';
 
       var links = item.querySelectorAll('a');
-      for (var i = 0; i < links.length; i++) links[i].href = plan.url;
+      for (var i = 0; i < links.length; i++) links[i].href = data.url;
       item.querySelector('.spc__img').setAttribute('tabindex', '-1');
       item.querySelector('.spc__img').setAttribute('aria-hidden', 'true');
 
       var img = item.querySelector('img');
-      img.src = plan.image;
-      if (plan.image2x) img.srcset = plan.image + ' 1x, ' + plan.image2x + ' 2x';
-      img.alt = plan.alt || plan.name;
+      img.src = data.image;
+      if (data.image2x) img.srcset = data.image + ' 1x, ' + data.image2x + ' 2x';
+      img.alt = data.alt || data.name;
 
-      item.querySelector('.spc__name').textContent = plan.name;
-      item.querySelector('.spc__price').textContent = plan.price;
+      item.querySelector('.spc__name').textContent = data.name;
+      item.querySelector('.spc__price').textContent = data.price;
 
       var prices = item.querySelector('.spc__prices');
       // Prix barré : avec la règle 'conforme', seulement s'il est le prix de référence Omnibus
       // (plus bas des 30 derniers jours) et supérieur au prix actuel. Sinon : prix actuel seul.
-      var showRegular = !!plan.regular && plan.regular !== plan.price && CONFIG.regularPrice !== 'jamais';
+      var showRegular = !!data.regular && data.regular !== data.price && CONFIG.regularPrice !== 'jamais';
       if (showRegular && CONFIG.regularPrice === 'conforme') {
-        var r = amount(plan.regular), l = amount(plan.lowest), c = amount(plan.price);
+        var r = amount(data.regular), l = amount(data.lowest), c = amount(data.price);
         showRegular = !isNaN(r) && !isNaN(l) && !isNaN(c) && Math.abs(r - l) < 0.01 && r > c;
       }
       if (showRegular) {
         var reg = document.createElement('span');
         reg.className = 'spc__regular';
         reg.innerHTML = '<span class="spc__sr">Prix initial : </span>';
-        reg.appendChild(document.createTextNode(plan.regular));
+        reg.appendChild(document.createTextNode(data.regular));
         prices.appendChild(reg);
       }
-      if (plan.ecotax) {   // même ordre que la fiche native : prix, éco-participation, « plus bas »
+      if (data.ecotax) {   // même ordre que la fiche native : prix, éco-participation, « plus bas »
         var eco = document.createElement('p');
         eco.className = 'spc__lowest spc__eco';
-        eco.textContent = plan.ecotax;
+        eco.textContent = data.ecotax;
         prices.parentNode.appendChild(eco);
       }
-      if (plan.lowest && CONFIG.showLowestPrice && (showRegular || CONFIG.regularPrice === 'fiche')) {
+      if (data.lowest && CONFIG.showLowestPrice && (showRegular || CONFIG.regularPrice === 'fiche')) {
         var low = document.createElement('p');
         low.className = 'spc__lowest';
-        low.textContent = plan.lowest;
+        low.textContent = data.lowest;
         prices.parentNode.appendChild(low);
       }
 
-      msg = document.createElement('p');
-      msg.className = 'spc__msg';
-      msg.setAttribute('role', 'status');   // région toujours présente, vide (et sans marge) tant qu'il n'y a rien à dire
-      item.parentNode.appendChild(msg);
-
-      addBtn = item.querySelector('.spc__add');
-      setButton('idle');
-      addBtn.addEventListener('click', addToCart);
+      line.btn = item.querySelector('.spc__add');
+      setButton(line, 'idle');
+      line.btn.addEventListener('click', function () { addToCart(line); });
+      if (!impressionSent && !impressionTimer) impressionTimer = setTimeout(sendImpression, CONFIG.impressionMaxMs);
     }
 
-    function setButton(state) {
-      addBtn.setAttribute('aria-disabled', state === 'idle' ? 'false' : 'true');
+    var msgOwner = null;
+    function say(owner, kind, text) {
+      msgOwner = owner;
+      msg.className = 'spc__msg' + (kind ? ' spc__msg--' + kind : '');
+      msg.textContent = text;
+    }
+    function unsay(owner) {
+      if (msgOwner !== owner) return;
+      msgOwner = null;
+      msg.className = 'spc__msg';
+      msg.textContent = '';
+    }
+
+    function setButton(line, state) {
+      var b = line.btn;
+      b.setAttribute('aria-disabled', state === 'idle' ? 'false' : 'true');
       if (state === 'loading') {
-        addBtn.innerHTML = '<span class="spc__spinner" aria-hidden="true"></span>';
-        addBtn.setAttribute('aria-label', 'Ajout au panier en cours');
+        b.innerHTML = '<span class="spc__spinner" aria-hidden="true"></span>';
+        b.setAttribute('aria-label', 'Ajout au panier en cours');
       } else if (state === 'done') {
-        addBtn.innerHTML = ICON_CHECK;
-        addBtn.setAttribute('aria-label', plan.name + ' ajouté au panier');
+        b.innerHTML = ICON_CHECK;
+        b.setAttribute('aria-label', line.data.name + ' ajouté au panier');
       } else {
-        addBtn.innerHTML = ICON_PLUS;
-        addBtn.setAttribute('aria-label', 'Ajouter au panier : ' + plan.name);
+        b.innerHTML = ICON_PLUS;
+        b.setAttribute('aria-label', 'Ajouter au panier : ' + line.data.name);
       }
     }
 
-    function showError(text) {
-      msg.className = 'spc__msg';
-      msg.textContent = text;
+    // Ajouts de l'encart l'un après l'autre : pour un visiteur qui n'a pas encore de panier, PrestaShop en crée un par
+    // requête simultanée et seul le dernier reste (les autres produits seraient perdus, alors que ✓ s'affiche).
+    var cartQueue = Promise.resolve();
+    function addToCart(line) {
+      if (line.busy || line.btn.getAttribute('aria-disabled') === 'true') return;
+      line.busy = true;
+      setButton(line, 'loading');
+      var run = function () { return sendToCart(line); };
+      cartQueue = cartQueue.then(run, run);
     }
-
-    function addToCart() {
-      if (busy || addBtn.getAttribute('aria-disabled') === 'true') return;
-      busy = true;
-      msg.className = 'spc__msg';
-      msg.textContent = '';
-      setButton('loading');
+    function sendToCart(line) {
+      var me = {};
       // Pas de délai d'abandon sur l'ajout (le serveur l'exécuterait quand même) : message d'attente au-delà de 10 s
       var slow = setTimeout(function () {
-        msg.className = 'spc__msg spc__msg--info';
-        msg.textContent = 'Ajout en cours, merci de patienter…';
-      }, CONFIG.timeoutMs);
+        say(me, 'info', 'Ajout en cours, merci de patienter\u2026');
+      }, CONFIG.slowCartMs);
 
       var tokenInput = document.querySelector('#add-to-cart-or-refresh input[name="token"]');
-      post(ps.urls.pages.cart, {
+      return post(ps.urls.pages.cart, {
         token: ps.static_token || (tokenInput && tokenInput.value) || '',
-        id_product: planId,
+        id_product: line.id,
         id_customization: 0,
         qty: 1,
         add: 1,
         action: 'update'
       }).then(function (resp) {
         clearTimeout(slow);
-        msg.textContent = '';
+        unsay(me);
         var errors = resp && resp.errors;
         if (!resp || resp.hasError || resp.success === false || (errors && errors.length)) {
           if (typeof ps.emit === 'function') ps.emit('handleError', { eventType: 'addProductToCart', resp: resp });
@@ -424,22 +526,21 @@
           });
         }
         // Pas de « add_to_cart » dans ce nom : la balise GA4 du conteneur (regex non ancrée) le capterait
-        pushEvent('pour_completer_ajout_panier');
-        setButton('done');
-        msg.className = 'spc__msg spc__msg--ok';
-        msg.textContent = plan.name + ' a été ajouté au panier.';
-        setTimeout(function () { setButton('idle'); msg.textContent = ''; }, 2500);
+        pushEvent('pour_completer_ajout_panier', itemPayload(line), ecommerceOf(line));
+        setButton(line, 'done');
+        say(me, 'ok', line.data.name + ' a été ajouté au panier.');
+        setTimeout(function () { setButton(line, 'idle'); unsay(me); }, 2500);
       })['catch'](function (err) {
         clearTimeout(slow);
-        setButton('idle');
+        setButton(line, 'idle');
         var m = err && err.messages;
-        showError((m && m.join ? m.join(' ') : m) || 'L’ajout au panier n’a pas fonctionné. Merci de réessayer.');
+        say(me, '', (m && m.join ? m.join(' ') : m) || 'L\u2019ajout au panier n\u2019a pas fonctionné. Merci de réessayer.');
       }).then(function () {
-        busy = false;
+        line.busy = false;
       });
     }
 
-    // Lecture du plan à la première interaction (défilement, toucher, clic, clavier), ou tout de suite si l'encart
+    // Lecture des prix à la première interaction (défilement, toucher, clic, clavier), ou tout de suite si l'encart
     // est déjà visible : pas de requête PHP pour un visiteur qui repart sans rien faire.
     function whenEngaged(cb) {
       var evts = ['scroll', 'touchstart', 'pointerdown', 'keydown'];
@@ -460,13 +561,15 @@
     if (!block.parentNode) return report('ancre', 'emplacement introuvable');
     if (typeof ps.on === 'function') ps.on('updatedProduct', mount);
 
-    var refreshUrl = ps.urls.pages.product + (ps.urls.pages.product.indexOf('?') === -1 ? '?' : '&') +
-      query({ id_product: planId, id_product_attribute: 0, action: 'refresh', ajax: 1, quantity_wanted: 1 });
     var base = String(ps.urls.base_url || '');
     if (base && base.charAt(base.length - 1) !== '/') base += '/';
+    function refreshUrl(id) {
+      return ps.urls.pages.product + (ps.urls.pages.product.indexOf('?') === -1 ? '?' : '&') +
+        query({ id_product: id, id_product_attribute: 0, action: 'refresh', ajax: 1, quantity_wanted: 1 });
+    }
 
-    // Lecture du prix du plan quand l'encart approche de l'écran (moins de requêtes serveur que la première
-    // interaction : un visiteur mobile qui ne descend pas jusqu'au bouton panier n'en déclenche aucune)
+    // Lecture des prix quand l'encart approche de l'écran (à moins de CONFIG.lazyMarginPx) : un visiteur mobile qui ne
+    // descend pas vers le bouton panier ne déclenche aucune requête
     function whenNear(cb) {
       if (!('IntersectionObserver' in window)) return whenEngaged(cb);
       var io = new IntersectionObserver(function (entries) {
@@ -477,18 +580,85 @@
       io.observe(block);
     }
 
-    whenNear(function () {
-      post(refreshUrl, { id_product: planId, id_customization: 0, qty: 1 }, CONFIG.timeoutMs)
+    // Cache de session : un produit lu et validé sur une fiche n'est pas relu pendant CONFIG.cacheMinutes sur les fiches
+    // suivantes (mêmes contrôles à la relecture). L'ajout au panier, lui, part toujours en direct.
+    var CACHE_FIELDS = ['name', 'url', 'price', 'regular', 'lowest', 'ecotax', 'image', 'image2x', 'alt'];
+    function cacheKey(id) {
+      return 'spc:1:' + ((ps.language && ps.language.iso_code) || '') + ':' + id;
+    }
+    function cacheGet(id) {
+      try {
+        var o = JSON.parse(window.sessionStorage.getItem(cacheKey(id)) || 'null');
+        if (!o || typeof o.t !== 'number' || typeof o.title !== 'string' || !o.d) return null;
+        var age = new Date().getTime() - o.t;
+        if (age < 0 || age > CONFIG.cacheMinutes * 60000) return null;
+        var d = { available: true };
+        for (var i = 0; i < CACHE_FIELDS.length; i++) {
+          if (typeof o.d[CACHE_FIELDS[i]] !== 'string') return null;
+          d[CACHE_FIELDS[i]] = o.d[CACHE_FIELDS[i]];
+        }
+        if (!d.price) return null;
+        if (own(CONFIG.names, id)) d.name = CONFIG.names[id];
+        return { title: o.title, data: d };
+      } catch (e) { return null; }
+    }
+    function cachePut(id, title, data) {
+      try {
+        var d = {};
+        for (var i = 0; i < CACHE_FIELDS.length; i++) d[CACHE_FIELDS[i]] = String(data[CACHE_FIELDS[i]] || '');
+        window.sessionStorage.setItem(cacheKey(id), JSON.stringify({ t: new Date().getTime(), title: title, d: d }));
+      } catch (e) { /* stockage plein ou interdit : sans cache */ }
+    }
+    // Contrôles : PrestaShop doit avoir renvoyé un produit du rôle annoncé, disponible, avec lien et image du site.
+    // Renvoie le motif du refus, ou '' si le produit peut être affiché.
+    function refusal(line, title, data) {
+      if (!CONFIG.roles[line.role].test(normalizeTitle(title))) return 'role_' + line.role;
+      if (!base || data.url.indexOf(base) !== 0 || (data.image && data.image.indexOf(base) !== 0)) return 'url';
+      if (!data.available) return data.price ? 'indisponible' : 'prix_illisible';
+      return '';
+    }
+    function accept(line, title, data) {
+      var why = refusal(line, title, data);
+      if (why) { drop(line); report(why, line.id); return false; }
+      line.data = data;
+      render(line);
+      return true;
+    }
+    function loadLine(line) {
+      var c = cacheGet(line.id);   // entrée de cache refusée par les contrôles : ignorée, produit relu sur PrestaShop
+      if (c && !refusal(line, c.title, c.data)) { accept(line, c.title, c.data); return Promise.resolve(); }
+      return post(refreshUrl(line.id), { id_product: line.id, id_customization: 0, qty: 1 }, CONFIG.timeoutMs)
         .then(function (d) {
           d = d || {};
-          // Contrôles en direct : PrestaShop doit renvoyer un plan / dispositif à langer, avec lien et image du site
-          if (!PLAN_TITLE.test(normalizeTitle(clean(d.product_title)))) { unmount(); return report('pas_un_plan', planId); }
-          plan = parsePlan(d);
-          if (!base || plan.url.indexOf(base) !== 0 || (plan.image && plan.image.indexOf(base) !== 0)) { unmount(); return report('url', planId); }
-          if (!plan.available) { unmount(); return report(plan.price ? 'indisponible' : 'prix_illisible', planId); }
-          render();
-          pushEvent('pour_completer_impression');
-        })['catch'](function (e) { unmount(); report('rafraichissement', e); });
+          var title = clean(d.product_title);
+          var data = parseProduct(d, line.id);
+          if (accept(line, title, data)) cachePut(line.id, title, data);
+        })['catch'](function (e) { if (!line.dropped) drop(line); report('rafraichissement', e); });
+    }
+
+    var impressionSent = false;
+    var impressionTimer = null;
+    function sendImpression() {
+      if (impressionSent || removed) return;
+      var shown = [];
+      for (var j = 0; j < lines.length; j++) if (!lines[j].dropped && lines[j].data) shown.push(lines[j]);
+      if (!shown.length) return;
+      impressionSent = true;
+      clearTimeout(impressionTimer);
+      var payload = { items: [] };
+      for (var k = 0; k < shown.length; k++) {
+        payload.items.push(itemPayload(shown[k]));
+        if (shown[k].role === 'pl') { payload.plan_id = shown[k].id; payload.plan_name = shown[k].data.name; payload.plan_price = shown[k].data.price; }
+      }
+      pushEvent('pour_completer_impression', payload);
+    }
+    whenNear(function () {
+      var jobs = [];
+      for (var i = 0; i < lines.length; i++) jobs.push(loadLine(lines[i]));
+      Promise.all(jobs).then(function () {
+        block.removeAttribute('aria-busy');
+        sendImpression();
+      });
     });
   }
 })();

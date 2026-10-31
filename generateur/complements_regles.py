@@ -3,7 +3,7 @@ tableau de validation) : draps housse, housses de matelas à langer, panières�
 
 Ils s'ajoutent après le plan à langer et les matelas, dans l'ordre donné, dans la limite de 3 lignes au total.
 Les duos et trios reçoivent aussi les compléments de leurs pièces (décision du 29/10/2026).
-Pas encore publiés sur le site : en attente de validation, puis d'une nouvelle version du tag « Pour compléter ».
+Publiés dans « l » (encart.py) et affichés par le tag « Pour compléter » à partir de sa version 2026-10-30.
 """
 
 COMPLEMENTS = {

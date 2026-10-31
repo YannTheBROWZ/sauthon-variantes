@@ -1,4 +1,6 @@
-"""Matelas associés aux meubles (extension de « Pour compléter ») : proposition à faire valider par Sauthon.
+"""Matelas associés aux meubles (extension de « Pour compléter ») : toutes les propositions, avec leur règle.
+Le site n'affiche que celles dont la règle est validée (PUBLIER dans encart.py) ; le tableau de validation
+montre les autres « à valider ». La coupe à 3 lignes se fait dans encart.py, après ce filtre.
 
 Règles (3 lignes au plus dans l'encart, plan à langer compris ; décision du 28/10 : 3 au lieu de 2) :
 - commode avec plan à langer : plan + matelas à langer ;
@@ -151,7 +153,7 @@ def taille_lit(pid):
 
 
 def besoin_lit(pid):
-    """(matelas de lit, sommier, preuve) ou (None, None, raison)."""
+    """(matelas de lit, sommier, preuve) ou (None, None, raison). La règle se déduit de la preuve par regle_lit()."""
     t, tx = titre_n(pid), texte(pid)
     acc = accessoires(pid)
     if type_meuble(pid) == 'berceau':
@@ -231,25 +233,35 @@ def surface_propre(pid):
     return False
 
 
+def regle_lit(pid, preuve):
+    """Règle d'un matelas de lit : 'berceau', 'a_corriger' (titre et description en désaccord) ou 'taille'."""
+    if type_meuble(pid) == 'berceau':
+        return 'berceau'
+    return 'a_corriger' if 'à corriger' in preuve else 'taille'
+
+
 def matelas_langer(pid):
+    """(matelas à langer, preuve, règle) ; règle : 'accessoire' (relié par Sauthon dans PrestaShop, taille compatible ou
+    non indiquée), 'defaut' (surface 68x52 connue, matelas neutre), 'suppose' (surface non indiquée : 68x52 supposée),
+    'boreale' (matelas des commodes Boréale, taille à confirmer)."""
     t = titre_n(pid)
     plan = PC['map'].get(str(pid))
     if 'boreale' in t and (plan or type_meuble(pid) == 'plan'):
         return MATELAS_BOREALE, 'matelas conçu pour les commodes Boréale (taille non indiquée : à confirmer)' + \
-            (' + accessoire PrestaShop' if MATELAS_BOREALE in accessoires(pid) else '')
+            (' + accessoire PrestaShop' if MATELAS_BOREALE in accessoires(pid) else ''), 'boreale'
     dim, preuve = surface_langer(pid)
     lies = [a for a in accessoires(pid) + (accessoires(int(plan)) if plan else []) if a in MATELAS_LANGER]
     if dim:
         comp = [a for a in lies if MATELAS_LANGER[a] == dim]
         if comp:
-            return comp[0], f'surface {dim[0]}x{dim[1]} ({preuve}) + accessoire PrestaShop'
+            return comp[0], f'surface {dim[0]}x{dim[1]} ({preuve}) + accessoire PrestaShop', 'accessoire'
         if dim == (68, 52):
-            return MATELAS_LANGER_DEFAUT, f'surface {dim[0]}x{dim[1]} ({preuve}), matelas neutre par défaut'
-        return None, f'aucun matelas {dim[0]}x{dim[1]} au catalogue'
+            return MATELAS_LANGER_DEFAUT, f'surface {dim[0]}x{dim[1]} ({preuve}), matelas neutre par défaut', 'defaut'
+        return None, f'aucun matelas {dim[0]}x{dim[1]} au catalogue', None
     comp = [a for a in lies if MATELAS_LANGER[a] in (None, (68, 52))]
     if comp:
-        return comp[0], 'accessoire PrestaShop (dimensions de la surface non indiquées)'
-    return MATELAS_LANGER_DEFAUT, 'surface standard 68x52 supposée (non indiquée sur la fiche) : à confirmer'
+        return comp[0], 'accessoire PrestaShop (dimensions de la surface non indiquées)', 'accessoire'
+    return MATELAS_LANGER_DEFAUT, 'surface standard 68x52 supposée (non indiquée sur la fiche) : à confirmer', 'suppose'
 
 
 # ---------------------------------------------------------------- trois lignes au plus (plan compris)
@@ -268,9 +280,10 @@ for pid in sorted(items):
         else:
             ml, som, pr = besoin_lit(pid)
             if ml:
-                candidats.append({'id': ml, 'role': 'matelas_lit', 'preuve': pr})
+                candidats.append({'id': ml, 'role': 'matelas_lit', 'preuve': pr, 'regle': regle_lit(pid, pr)})
                 if som:
-                    candidats.append({'id': som, 'role': 'sommier', 'preuve': 'description : sommier non fourni'})
+                    candidats.append({'id': som, 'role': 'sommier', 'preuve': 'description : sommier non fourni',
+                                      'regle': 'sommier'})
             else:
                 notes.append(f'matelas de lit : {pr}')
     lit_combine = est_lit_combine(pid) or (tm == 'duo_armoire' and any(est_lit_combine(p) for p in pieces(pid)))
@@ -279,15 +292,13 @@ for pid in sorted(items):
         if matelas_langer_inclus(pid):
             notes.append('matelas à langer déjà fourni')
         else:
-            mal, pr = matelas_langer(pid)
+            mal, pr, regle = matelas_langer(pid)
             if mal:
-                candidats.append({'id': mal, 'role': 'matelas_langer', 'preuve': pr + (' (lit combiné : règle à valider)' if lit_combine else '')})
+                candidats.append({'id': mal, 'role': 'matelas_langer', 'regle': 'lit_combine' if lit_combine else regle,
+                                  'preuve': pr + (' (lit combiné : règle à valider)' if lit_combine else '')})
             else:
                 notes.append(f'matelas à langer : {pr}')
-    places = MAX_LIGNES - (1 if plan or pid in A_VALIDER else 0)
-    retenus = candidats[:places]
-    for c in candidats[places:]:
-        notes.append(f'non affiché ({MAX_LIGNES} lignes au plus) : {nom(c["id"])}')
+    retenus = candidats                  # toutes les propositions : encart.py filtre (PUBLIER) puis coupe à MAX_LIGNES
     if retenus:
         data[str(pid)] = [c['id'] for c in retenus]
     review[pid] = {'type': tm, 'plan': plan, 'integre': integre, 'lit_combine': lit_combine, 'a_langer': a_langer, 'lignes': retenus, 'notes': notes}
@@ -320,7 +331,8 @@ for pid in sorted(items):
     elif cands:
         preuve = ('même collection' if fam and items[cands[0]]['fam'] == fam else '') + \
                  (' + accessoire PrestaShop' if cands[0] in acc else '')
-        retenus.append({'id': cands[0], 'role': 'housse_rechange' if a_housse else 'housse', 'preuve': preuve.strip(' +')})
+        retenus.append({'id': cands[0], 'role': 'housse_rechange' if a_housse else 'housse', 'preuve': preuve.strip(' +'),
+                        'regle': 'housse'})
     elif a_housse:
         notes.append('housse déjà fournie avec le matelas')
     else:

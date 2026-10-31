@@ -26,7 +26,12 @@ Le second tag GTM ([tag/tag-gtm-pour-completer.html](tag/tag-gtm-pour-completer.
 jusqu'à 3 produits : le plan à langer assorti, les matelas (`generateur/matelas.py`, à partir des fiches lues par
 `generateur/lire_fiches_matelas.py`) et les compléments demandés par Sauthon par référence produit — draps housse,
 housses de matelas à langer, panières… (`generateur/complements_regles.py`), assemblés par `generateur/encart.py`
-(liste « l » du fichier publié). Sa table des plans est publiée à chaque génération dans
+(liste « l » du fichier publié). **Seules les règles validées par Sauthon sont publiées** (`PUBLIER` dans
+`generateur/encart.py`, décision du 31/10/2026 : plans à langer, matelas de lit des lits 120x60 / 140x70, des duos et
+des trios, compléments demandés, housses des matelas à langer) ; les autres propositions (matelas à langer, sommiers,
+matelas des berceaux et lits junior…) restent « à valider » dans le tableau de validation. Pour en publier une, passer sa
+règle à `True`. Une fiche illisible pendant la lecture du site garde sa liste de la veille.
+Sa table des plans est publiée à chaque génération dans
 <https://yannthebrowz.github.io/sauthon-variantes/pour-completer.json> par `generateur/pour_completer.py` :
 
 - elle part des correspondances validées (`TABLE_VALIDEE` dans `generateur/pour_completer_regles.py`) ;
@@ -39,7 +44,8 @@ Pour refuser une suggestion ou retirer une correspondance validée, **déplacer 
 simplement supprimée, elle serait republiée la nuit suivante par l'ajout automatique.
 
 Les ajouts et retraits automatiques de la nuit sont listés dans `status.json` (rubrique `pour_completer`).
-Le tag masque aussi l'encart en direct quand le titre de la fiche annonce « + plan à langer offert ».
+Le tag retire aussi en direct un produit que le titre de la fiche annonce offert ou inclus (« + plan à langer offert »,
+« + matelas offert », « + 2 draps offerts »…).
 
 ## Garde-fous
 

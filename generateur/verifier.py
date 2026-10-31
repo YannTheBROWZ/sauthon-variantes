@@ -15,7 +15,8 @@ MIN_FLUX = 800               # le flux compte ~1 550 produits
 MIN_GROUPES = 100            # ~205 groupes aujourd'hui
 MIN_POUR_COMPLETER = 50      # ~92 fiches avec l'encart « Pour compléter » aujourd'hui
 MIN_COMPOSITIONS = 120       # ~203 fiches avec composition aujourd'hui
-MIN_ENCART = 250             # ~420 fiches avec au moins une ligne dans l'encart (plan, matelas, compléments)
+MIN_ENCART = 200             # ~305 fiches avec au moins une ligne publiée dans l'encart (plan, matelas, compléments)
+MAX_CHANGEMENT_ENCART = 0.2  # à règles égales, plus de 20 % des listes (et 30 fiches) qui changent d'un coup : anomalie
 MAX_LIGNES_ENCART = 3
 ROLES_ENCART = {'pl', 'ml', 'ma', 'so', 'ho', 'dr', 'pa', 'co'}
 
@@ -44,6 +45,7 @@ pc = json.load(open('pc_data.json')) if os.path.exists('pc_data.json') else None
 pc_status = json.load(open('pc_status.json')) if os.path.exists('pc_status.json') else None
 prev_pc_path = '../docs/pour-completer.json'
 prev_pc = json.load(open(prev_pc_path)) if os.path.exists(prev_pc_path) else None
+encart_status = json.load(open('encart_status.json')) if os.path.exists('encart_status.json') else None
 
 errors = []
 if len(rows) < MIN_FLUX:
@@ -108,8 +110,21 @@ if pc is not None:
             errors.append(f'Encart : lignes hors format : {mal[:10]}')
         if len(lignes) < MIN_ENCART:
             errors.append(f'Encart : trop peu de fiches avec des lignes ({len(lignes)}, minimum {MIN_ENCART}).')
-        if prev_pc and prev_pc.get('l') and len(lignes) < len(prev_pc['l']) * SEUIL_BAISSE:
+        meme_regles = bool(prev_pc and prev_pc.get('l') and prev_pc.get('r') and prev_pc.get('r') == pc.get('r'))
+        if meme_regles and len(lignes) < len(prev_pc['l']) * SEUIL_BAISSE:   # baisse voulue si les règles ont changé
             errors.append(f'Encart : baisse anormale des fiches avec des lignes : {len(prev_pc["l"])} -> {len(lignes)}.')
+        # le tag lit « l » en priorité : chaque plan de « map » doit être la première ligne de sa fiche
+        sans_plan = [k for k, v in pc['map'].items() if not lignes.get(k) or lignes[k][0] != [int(v), 'pl']]
+        if sans_plan:
+            errors.append(f'Encart : plans à langer de « map » absents de « l » (ils disparaîtraient du site) : {sans_plan[:10]}')
+        # à règles égales (même empreinte « r »), un changement massif d'une génération à l'autre trahit une lecture
+        # ratée du site (pages vides, thème modifié…) plutôt qu'un vrai changement du catalogue
+        if meme_regles:
+            avant = prev_pc['l']
+            changes = sorted((set(avant) | set(lignes)) - {k for k in set(avant) & set(lignes) if avant[k] == lignes[k]}, key=int)
+            if len(changes) > max(30, MAX_CHANGEMENT_ENCART * len(avant)):
+                errors.append(f'Encart : {len(changes)} listes changent d\'un coup à règles égales (lecture du site ratée ?) : '
+                              f'{changes[:10]}')
 
 # cohérence interne : tout produit référencé doit avoir son URL
 refs = {m[0] for g in new['g'] for m in g[2]} | {t for lst in new['xl'] for _, t in lst} | {int(k) for k in new['x']}
@@ -127,6 +142,7 @@ status = {
     'packs_supprimes': sorted(k for k, v in packs.items() if v.get('gone')),
     'pour_completer': pc_status,
     'encart_fiches': len(pc.get('l', {})) if pc else None,
+    'encart': encart_status,
     'statut': 'erreur' if errors else 'ok',
     'erreurs': errors,
 }
