@@ -58,7 +58,7 @@
     maxAgeDays: 7,           // données plus anciennes (tâche nocturne en panne) : rien n'est affiché · 0 = sans limite
     // Plafonds d'affichage par fiche (données réelles : 3 dimensions, 12 membres, 5 valeurs, 5 options au plus)
     maxDims: 6, maxMembers: 60, maxValues: 30, maxOptions: 10,
-    version: '2026-10-28b'   // reporté dans data-version du bloc et dans la note de version GTM
+    version: '2026-10-31'   // reporté dans data-version du bloc et dans la note de version GTM
   };
   /* =============== FIN CONFIGURATION =============== */
 
@@ -165,10 +165,33 @@
     var actions = actionsEl();
     return prices ? prices.getBoundingClientRect().bottom : actions ? actions.getBoundingClientRect().top : Infinity;
   }
+  // Gestes du visiteur depuis le chargement (pour ne pas insérer sous ses yeux une zone qu'il regarde déjà)
+  var userActed = false;
+  var ACT_EVTS = ['wheel', 'touchstart', 'keydown', 'pointerdown'];
+  function acted() {
+    userActed = true;
+    for (var a = 0; a < ACT_EVTS.length; a++) window.removeEventListener(ACT_EVTS[a], acted, true);
+  }
+  for (var a0 = 0; a0 < ACT_EVTS.length; a0++) window.addEventListener(ACT_EVTS[a0], acted, { passive: true, capture: true });
+
   function pousseVue(y, elapsed) {
     var h = window.innerHeight || document.documentElement.clientHeight || 0;
+    if (y >= h) return false;                  // zone sous l'écran : rien ne bouge sous les yeux du visiteur
+    if (userActed) return true;                // le visiteur bouge déjà dans la page (molette, toucher, clavier, clic)
+    var nt = navType();                        // rechargement ou bouton Retour : la position vient du navigateur, pas
+    if (nt === 'reload' || nt === 'back_forward') return false;   // d'un geste du visiteur -> on insère quand même
     var scrolled = (window.pageYOffset || document.documentElement.scrollTop || 0) > 0;
-    return y < h && (scrolled || elapsed > CONFIG.lateMs);
+    return scrolled || elapsed > CONFIG.lateMs;
+  }
+  function navType() {
+    try {
+      var e = window.performance && performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
+      if (e && e.type) return e.type;
+      var t = window.performance && performance.navigation ? performance.navigation.type : 0;
+      return t === 1 ? 'reload' : t === 2 ? 'back_forward' : 'navigate';
+    } catch (err) {
+      return 'navigate';
+    }
   }
   // Plafonds d'affichage : un groupe hors plafonds est ignoré sur cette fiche (ni gel, ni bloc géant)
   function groupOk(g) {

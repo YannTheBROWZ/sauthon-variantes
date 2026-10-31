@@ -80,7 +80,7 @@
     lateMs: 1500,            // au-delà, on n'insère que si la zone n'est pas déjà sous les yeux du visiteur
     maxBytes: 50000,         // liste refusée au-delà (13 Ko aujourd'hui)
     maxAgeDays: 14,          // liste plus ancienne : pas d'encart · 0 = sans limite
-    version: '2026-10-31',
+    version: '2026-10-31b',
     // Un produit n'est proposé que si son titre PrestaShop, lu en direct, correspond au rôle annoncé par la liste
     // (pl plan à langer, ml matelas de lit / berceau, ma matelas à langer, so sommier, ho housse de matelas à langer,
     // dr draps housse, pa panière, co autre complément). Titres comparés en minuscules, sans accents.
@@ -212,10 +212,33 @@
     return document.getElementById('add-to-cart-or-refresh') || (acts && acts.querySelector('form')) ||
       document.querySelector('.js-product-add-to-cart') || document.querySelector('.product-add-to-cart');
   }
+  // Gestes du visiteur depuis le chargement (pour ne pas insérer sous ses yeux une zone qu'il regarde déjà)
+  var userActed = false;
+  var ACT_EVTS = ['wheel', 'touchstart', 'keydown', 'pointerdown'];
+  function acted() {
+    userActed = true;
+    for (var a = 0; a < ACT_EVTS.length; a++) window.removeEventListener(ACT_EVTS[a], acted, true);
+  }
+  for (var a0 = 0; a0 < ACT_EVTS.length; a0++) window.addEventListener(ACT_EVTS[a0], acted, { passive: true, capture: true });
+
   function pousseVue(y, elapsed) {
     var h = window.innerHeight || document.documentElement.clientHeight || 0;
+    if (y >= h) return false;                  // zone sous l'écran : rien ne bouge sous les yeux du visiteur
+    if (userActed) return true;                // le visiteur bouge déjà dans la page (molette, toucher, clavier, clic)
+    var nt = navType();                        // rechargement ou bouton Retour : la position vient du navigateur, pas
+    if (nt === 'reload' || nt === 'back_forward') return false;   // d'un geste du visiteur -> on insère quand même
     var scrolled = (window.pageYOffset || document.documentElement.scrollTop || 0) > 0;
-    return y < h && (scrolled || elapsed > CONFIG.lateMs);
+    return scrolled || elapsed > CONFIG.lateMs;
+  }
+  function navType() {
+    try {
+      var e = window.performance && performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
+      if (e && e.type) return e.type;
+      var t = window.performance && performance.navigation ? performance.navigation.type : 0;
+      return t === 1 ? 'reload' : t === 2 ? 'back_forward' : 'navigate';
+    } catch (err) {
+      return 'navigate';
+    }
   }
 
   function productTitle() {
