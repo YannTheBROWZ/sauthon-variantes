@@ -58,7 +58,7 @@
     maxAgeDays: 7,           // données plus anciennes (tâche nocturne en panne) : rien n'est affiché · 0 = sans limite
     // Plafonds d'affichage par fiche (données réelles : 3 dimensions, 12 membres, 5 valeurs, 5 options au plus)
     maxDims: 6, maxMembers: 60, maxValues: 30, maxOptions: 10,
-    version: '2026-10-31b'   // reporté dans data-version du bloc et dans la note de version GTM
+    version: '2026-10-31c'   // reporté dans data-version du bloc et dans la note de version GTM
   };
   /* =============== FIN CONFIGURATION =============== */
 
@@ -200,6 +200,8 @@
   function keepView(insert) {
     var ref = null, top0 = 0, n, r;
     var h = window.innerHeight || document.documentElement.clientHeight || 0;
+    // tout en haut de la page, le visiteur regarde le haut de la fiche : on ne fait pas défiler la page
+    if ((window.pageYOffset || document.documentElement.scrollTop || 0) <= 0) return insert();
     var cta = document.querySelector('#add-to-cart-or-refresh [data-button-action="add-to-cart"]') ||
       document.querySelector('[data-button-action="add-to-cart"]');
     if (cta) {

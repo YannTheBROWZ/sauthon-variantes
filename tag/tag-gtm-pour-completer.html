@@ -80,7 +80,7 @@
     calmMs: 1000,            // zone à l'écran et visiteur en train de faire défiler : insertion 1 s après son arrêt
     maxBytes: 50000,         // liste refusée au-delà (13 Ko aujourd'hui)
     maxAgeDays: 14,          // liste plus ancienne : pas d'encart · 0 = sans limite
-    version: '2026-10-31c',
+    version: '2026-10-31d',
     // Un produit n'est proposé que si son titre PrestaShop, lu en direct, correspond au rôle annoncé par la liste
     // (pl plan à langer, ml matelas de lit / berceau, ma matelas à langer, so sommier, ho housse de matelas à langer,
     // dr draps housse, pa panière, co autre complément). Titres comparés en minuscules, sans accents.
@@ -249,6 +249,8 @@
   function keepView(insert) {
     var ref = null, top0 = 0, n, r;
     var h = window.innerHeight || document.documentElement.clientHeight || 0;
+    // tout en haut de la page, le visiteur regarde le haut de la fiche : on ne fait pas défiler la page
+    if ((window.pageYOffset || document.documentElement.scrollTop || 0) <= 0) return insert();
     var cta = document.querySelector('#add-to-cart-or-refresh [data-button-action="add-to-cart"]') ||
       document.querySelector('[data-button-action="add-to-cart"]');
     if (cta) {
