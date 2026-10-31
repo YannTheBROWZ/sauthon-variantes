@@ -13,8 +13,10 @@ Rôles : pl plan à langer, ml matelas de lit ou de berceau, ma matelas à lange
 dr draps housse, pa panière, co autre complément. Le tag vérifie chaque rôle sur le titre lu en direct sur PrestaShop.
 
 Fiche illisible pendant la lecture des pages (lire_fiches_matelas.py), elle ou une pièce de son pack, ou son plan :
-elle garde sa liste de la veille (si les règles n'ont pas changé). Plus de 5 % de fiches illisibles : toute la liste de
-la veille est reprise.
+elle garde sa liste de la veille si les règles n'ont pas changé (le plan à langer suit toujours « map » du jour) ; sinon
+elle ne publie que ce qui ne dépend pas des pages (plan, compléments). Lecture dégradée (plus de 5 % de fiches
+illisibles, ou pages lues mais vides, par exemple après un changement de thème) : listes de la veille ; sans veille
+utilisable, rien n'est publié (arrêt, la version en ligne reste).
 """
 import hashlib, json, os, re
 exec(open('regroupement.py').read().split("if __name__")[0])
@@ -43,6 +45,7 @@ PUBLIER = {
 }
 MATELAS_LIT_DEMANDES = {2274, 11}         # Confort Baby 120x60 et 140x70
 SEUIL_DEGRADE = 0.05                      # part de fiches illisibles au-delà de laquelle toute la liste de la veille est reprise
+SEUIL_PAGES_VIDES = 0.2                   # part de pages lues mais sans texte (extraction cassée) qui rend la lecture dégradée
 
 PC = json.load(open('pc_data.json'))
 MAT = json.load(open('matelas_review.json')) if os.path.exists('matelas_review.json') else {}
@@ -54,7 +57,9 @@ for r_ in rows:
         PAR_REF.setdefault(r_['ref'].strip().upper(), int(r_['id']))
 ROLE_MATELAS = {'matelas_lit': 'ml', 'matelas_langer': 'ma', 'sommier': 'so', 'housse': 'ho', 'housse_rechange': 'ho'}
 EN_ERREUR = {int(k) for k, v in FICHES.items() if v.get('err')}
-DEGRADE = bool(FICHES) and len(EN_ERREUR) > SEUIL_DEGRADE * len(FICHES)
+_lues = [v for v in FICHES.values() if not v.get('err') and not v.get('gone')]
+PAGES_VIDES = sum(1 for v in _lues if not v.get('description') and not v.get('court'))
+DEGRADE = bool(FICHES) and (len(EN_ERREUR) > SEUIL_DEGRADE * len(FICHES) or PAGES_VIDES > SEUIL_PAGES_VIDES * max(len(_lues), 1))
 
 
 def empreinte():
@@ -160,7 +165,7 @@ def candidates(pid, proposition=False):
     for l in MAT.get(str(pid), {}).get('lignes', []):
         out.append((l['id'], ROLE_MATELAS[l['role']], 'matelas', categorie(pid, l['id'], 'matelas', l)))
     for cid, origine in complements_de(pid):
-        if cid in FEED:
+        if cid in items:
             out.append((cid, role_titre(cid), origine, categorie(pid, cid, origine)))
     return [c for c in out if c[0] != pid]
 
@@ -189,17 +194,31 @@ def dependances(pid):
 
 
 def liste_publiee(pid):
-    """(liste [[id, rôle]], source) : 'calcul', 'veille' (page illisible, liste de la veille gardée) ou 'vide'."""
-    if (DEGRADE or dependances(pid) & EN_ERREUR) and str(pid) in VEILLE:
-        garde = [[x[0], x[1]] for x in VEILLE[str(pid)] if isinstance(x, list) and len(x) >= 2 and x[0] in FEED
-                 and x[0] != pid and x[1] in ROLES][:MAX_LIGNES]
+    """(liste [[id, rôle]], source) : 'calcul', 'veille' (page illisible, liste de la veille gardée), 'sans_pages'
+    (page illisible sans veille : plan et compléments seulement) ou 'vide'."""
+    illisible = DEGRADE or bool(dependances(pid) & EN_ERREUR)
+    if illisible and str(pid) in VEILLE:
+        # liste de la veille, mais le plan à langer suit toujours « map » du jour (lu dans le flux, pas sur la page) :
+        # plan ajouté ou retiré aujourd'hui pris en compte, et « map » reste la tête de « l » (contrôle de verifier.py)
+        plan = PC['map'].get(str(pid))
+        garde = ([[int(plan), 'pl']] if plan and PUBLIER['plan'] else []) + \
+            [[x[0], x[1]] for x in VEILLE[str(pid)] if isinstance(x, list) and len(x) >= 2 and x[0] in items
+             and x[0] != pid and x[1] in ROLES and x[1] != 'pl' and not (plan and x[0] == int(plan))]
+        garde = garde[:MAX_LIGNES]
         if garde:
             return garde, 'veille'
-    pub, _, _ = lignes(pid)
+    pub, coupees, _ = lignes(pid)
+    if illisible:      # matelas calculés sur une page vide : pas fiables (taille « à corriger » perdue…), on les retire
+        pub = [c for c in pub + coupees if c[2] != 'matelas'][:MAX_LIGNES]
+        return [[i, r] for i, r, _, _ in pub], ('sans_pages' if pub else 'vide')
     return [[i, r] for i, r, _, _ in pub], ('calcul' if pub else 'vide')
 
 
 if __name__ == '__main__':
+    if DEGRADE and not VEILLE:
+        raise SystemExit(f'Lecture du site dégradée ({len(EN_ERREUR)} fiches illisibles, {PAGES_VIDES} pages vides sur '
+                         f'{len(FICHES)}) et pas de liste de la veille aux mêmes règles : rien n\'est publié, la version '
+                         'précédente reste en ligne.')
     publie, sources = {}, collections.Counter()
     for pid in sorted(items):
         lst, src = liste_publiee(pid)
@@ -218,8 +237,9 @@ if __name__ == '__main__':
         'fiches': len(publie), 'lignes': sum(len(v) for v in publie.values()),
         'roles': dict(collections.Counter(r for v in publie.values() for _, r in v)),
         'publiees_par_regle': dict(publiees), 'a_valider_par_regle': dict(a_valider),
-        'fiches_illisibles': sorted(EN_ERREUR), 'lecture_degradee': DEGRADE,
-        'listes_de_la_veille': sources['veille'], 'refs_inconnues': refs_inconnues(), 'empreinte': EMPREINTE,
+        'fiches_illisibles': sorted(EN_ERREUR), 'pages_vides': PAGES_VIDES, 'lecture_degradee': DEGRADE,
+        'listes_de_la_veille': sources['veille'], 'listes_sans_pages': sources['sans_pages'],
+        'refs_inconnues': refs_inconnues(), 'empreinte': EMPREINTE,
     }
     json.dump(statut, open('encart_status.json', 'w'), ensure_ascii=False, indent=1)
     print(f'Encart : {statut["fiches"]} fiches, {statut["lignes"]} lignes', statut['roles'],

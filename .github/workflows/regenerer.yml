@@ -80,3 +80,16 @@ jobs:
 
       - id: deploiement
         uses: actions/deploy-pages@v4
+
+      # Données publiées, mais lecture du site dégradée (pages illisibles ou vides) : l'encart garde les listes de la
+      # veille. La tâche échoue ici pour que GitHub envoie un e-mail (rien n'est annulé).
+      - name: Signaler une lecture dégradée du site
+        run: |
+          python3 -c "
+          import json, sys
+          e = json.load(open('docs/status.json')).get('encart') or {}
+          if e.get('lecture_degradee'):
+              sys.exit(f'Lecture du site dégradée : {len(e.get(\"fiches_illisibles\", []))} fiches illisibles, '
+                       f'{e.get(\"pages_vides\")} pages vides ; listes « Pour compléter » de la veille gardées.')
+          print('Lecture du site normale.')
+          "

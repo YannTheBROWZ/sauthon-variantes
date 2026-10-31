@@ -25,6 +25,8 @@ def fetch(it):
         time.sleep(5 * (essai + 1))
     else:
         return it['id'], {'err': err}
+    if not re.search(r'<h1\b', s) or not re.search(r'id="product-description"|class="product-description-short', s):
+        return it['id'], {'err': 'page sans fiche produit (maintenance ?)'}
     out = {'items': [], 'acc': []}
     m = re.search(r'<section class="product-accessories.*?</section>\s*</section>', s, re.S)
     if m:

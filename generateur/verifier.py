@@ -45,6 +45,7 @@ pc = json.load(open('pc_data.json')) if os.path.exists('pc_data.json') else None
 pc_status = json.load(open('pc_status.json')) if os.path.exists('pc_status.json') else None
 prev_pc_path = '../docs/pour-completer.json'
 prev_pc = json.load(open(prev_pc_path)) if os.path.exists(prev_pc_path) else None
+prev_status = json.load(open('../docs/status.json')) if os.path.exists('../docs/status.json') else {}
 encart_status = json.load(open('encart_status.json')) if os.path.exists('encart_status.json') else None
 
 errors = []
@@ -119,6 +120,14 @@ if pc is not None:
             errors.append(f'Encart : plans à langer de « map » absents de « l » (ils disparaîtraient du site) : {sans_plan[:10]}')
         # à règles égales (même empreinte « r »), un changement massif d'une génération à l'autre trahit une lecture
         # ratée du site (pages vides, thème modifié…) plutôt qu'un vrai changement du catalogue
+        # (lecture dégradée : les listes publiées sont celles de la veille, ce contrôle ne s'applique pas)
+        if meme_regles and encart_status and not encart_status.get('lecture_degradee') and \
+                (prev_status.get('encart') or {}).get('publiees_par_regle'):
+            av_r, ap_r = prev_status['encart']['publiees_par_regle'], encart_status['publiees_par_regle']
+            for regle, n_av in av_r.items():
+                if n_av - ap_r.get(regle, 0) > max(10, 0.05 * n_av):
+                    errors.append(f'Encart : baisse anormale des lignes « {regle} » à règles égales : {n_av} -> '
+                                  f'{ap_r.get(regle, 0)} (lecture du site ratée ?).')
         if meme_regles:
             avant = prev_pc['l']
             changes = sorted((set(avant) | set(lignes)) - {k for k in set(avant) & set(lignes) if avant[k] == lignes[k]}, key=int)
