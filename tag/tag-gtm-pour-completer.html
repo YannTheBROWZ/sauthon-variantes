@@ -448,15 +448,17 @@
       if (!impressionSent && !impressionTimer) impressionTimer = setTimeout(sendImpression, CONFIG.impressionMaxMs);
     }
 
-    var msgOwner = null;
+    var msgOwner = null, msgKind = '';
     function say(owner, kind, text) {
       msgOwner = owner;
+      msgKind = kind || 'erreur';
       msg.className = 'spc__msg' + (kind ? ' spc__msg--' + kind : '');
       msg.textContent = text;
     }
     function unsay(owner) {
       if (msgOwner !== owner) return;
       msgOwner = null;
+      msgKind = '';
       msg.className = 'spc__msg';
       msg.textContent = '';
     }
@@ -478,20 +480,48 @@
 
     // Ajouts de l'encart l'un après l'autre : pour un visiteur qui n'a pas encore de panier, PrestaShop en crée un par
     // requête simultanée et seul le dernier reste (les autres produits seraient perdus, alors que ✓ s'affiche).
+    // Le bouton « Ajouter au panier » de la fiche entre aussi dans la file : un ajout de l'encart attend la réponse de
+    // PrestaShop à l'ajout natif (événement updateCart ou handleError, 15 s au plus).
     var cartQueue = Promise.resolve();
+    var nativeWait = null, ownEmit = false;
+    function nativeDone() {
+      if (ownEmit || !nativeWait) return;
+      clearTimeout(nativeWait.timer);
+      var done = nativeWait.resolve;
+      nativeWait = null;
+      done();
+    }
+    if (typeof ps.on === 'function') { ps.on('updateCart', nativeDone); ps.on('handleError', nativeDone); }
+    document.addEventListener('click', function (e) {
+      var t = e.target;
+      while (t && t !== document && !(t.getAttribute && t.getAttribute('data-button-action') === 'add-to-cart')) t = t.parentNode;
+      if (!t || t === document || nativeWait || block.contains(t)) return;
+      var wait = new Promise(function (resolve) { nativeWait = { resolve: resolve, timer: setTimeout(nativeDone, 15000) }; });
+      var hold = function () { return wait; };
+      cartQueue = cartQueue.then(hold, hold);
+    }, true);
+    function emit(name, payload) {   // un écouteur du thème qui plante ne doit pas faire croire à un échec de l'ajout
+      if (typeof ps.emit !== 'function') return;
+      ownEmit = true;
+      try { ps.emit(name, payload); } catch (e) { report('emit_' + name, e); }
+      ownEmit = false;
+    }
     function addToCart(line) {
       if (line.busy || line.btn.getAttribute('aria-disabled') === 'true') return;
       line.busy = true;
+      sendImpression();   // l'impression précède toujours l'ajout (lignes déjà affichées)
+      if (msgOwner && msgKind === 'erreur') unsay(msgOwner);   // nouvelle tentative : l'erreur précédente disparaît
       setButton(line, 'loading');
-      var run = function () { return sendToCart(line); };
-      cartQueue = cartQueue.then(run, run);
-    }
-    function sendToCart(line) {
       var me = {};
       // Pas de délai d'abandon sur l'ajout (le serveur l'exécuterait quand même) : message d'attente au-delà de 10 s
+      // après le clic, file d'attente comprise
       var slow = setTimeout(function () {
         say(me, 'info', 'Ajout en cours, merci de patienter\u2026');
       }, CONFIG.slowCartMs);
+      var run = function () { return sendToCart(line, me, slow); };
+      cartQueue = cartQueue.then(run, run);
+    }
+    function sendToCart(line, me, slow) {
 
       var tokenInput = document.querySelector('#add-to-cart-or-refresh input[name="token"]');
       return post(ps.urls.pages.cart, {
@@ -506,25 +536,23 @@
         unsay(me);
         var errors = resp && resp.errors;
         if (!resp || resp.hasError || resp.success === false || (errors && errors.length)) {
-          if (typeof ps.emit === 'function') ps.emit('handleError', { eventType: 'addProductToCart', resp: resp });
+          emit('handleError', { eventType: 'addProductToCart', resp: resp });
           var e = new Error('cart');
           e.messages = errors;
           throw e;
         }
         // Même événement que le bouton natif : mini-panier, popup de confirmation
         // et add_to_cart GA4 (poussé par le module GTM du site) suivent automatiquement.
-        if (typeof ps.emit === 'function') {
-          ps.emit('updateCart', {
-            reason: {
-              idProduct: resp.id_product,
-              idProductAttribute: resp.id_product_attribute,
-              idCustomization: resp.id_customization,
-              linkAction: 'add-to-cart',
-              cart: resp.cart
-            },
-            resp: resp
-          });
-        }
+        emit('updateCart', {
+          reason: {
+            idProduct: resp.id_product,
+            idProductAttribute: resp.id_product_attribute,
+            idCustomization: resp.id_customization,
+            linkAction: 'add-to-cart',
+            cart: resp.cart
+          },
+          resp: resp
+        });
         // Pas de « add_to_cart » dans ce nom : la balise GA4 du conteneur (regex non ancrée) le capterait
         pushEvent('pour_completer_ajout_panier', itemPayload(line), ecommerceOf(line));
         setButton(line, 'done');
@@ -613,7 +641,8 @@
     // Renvoie le motif du refus, ou '' si le produit peut être affiché.
     function refusal(line, title, data) {
       if (!CONFIG.roles[line.role].test(normalizeTitle(title))) return 'role_' + line.role;
-      if (!base || data.url.indexOf(base) !== 0 || (data.image && data.image.indexOf(base) !== 0)) return 'url';
+      if (!base || data.url.indexOf(base) !== 0 || (data.image && data.image.indexOf(base) !== 0) ||
+          (data.image2x && data.image2x.indexOf(base) !== 0)) return 'url';
       if (!data.available) return data.price ? 'indisponible' : 'prix_illisible';
       return '';
     }
