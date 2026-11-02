@@ -21,7 +21,7 @@ utilisable, rien n'est publié (arrêt, la version en ligne reste).
 import hashlib, json, os, re
 exec(open('regroupement.py').read().split("if __name__")[0])
 from pour_completer_regles import A_VALIDER
-from complements_regles import COMPLEMENTS
+from complements_regles import COMPLEMENTS, COMPLEMENTS_PAR_REF, COMPLEMENTS_MOTIFS
 
 MAX_LIGNES = 3
 ROLES = ('pl', 'ml', 'ma', 'so', 'ho', 'dr', 'pa', 'co')
@@ -32,9 +32,10 @@ PUBLIER = {
     'plan': True,                        # plans à langer validés (map)
     'plan_propose': False,               # plan en attente de validation (A_VALIDER) : jamais publié
     'matelas_lit_demande': True,         # matelas de lit des lits 120x60 et 140x70, des duos et des trios (demande du 30/10)
-    'matelas_lit_autre': False,          # berceaux, lits junior 90x190 / 90x200, lits 100x50
+    'matelas_lit_junior': True,          # lits junior 90x190 / 90x200 (demande du 02/11)
+    'matelas_lit_autre': False,          # berceaux, lits 100x50
     'matelas_lit_a_corriger': False,     # titre et description de la fiche en désaccord sur la taille
-    'sommier': False,                    # lits junior dont la fiche dit « sommier non fourni »
+    'sommier': True,                     # lits junior dont la fiche dit « sommier non fourni » (demande du 02/11)
     'matelas_langer_accessoire': False,  # matelas à langer que Sauthon relie en accessoire dans PrestaShop
     'matelas_langer_defaut': False,      # surface 68x52 connue, aucun matelas relié : matelas neutre 3194
     'matelas_langer_a_confirmer': False,  # taille de la surface non indiquée (68x52 supposée), commodes Boréale
@@ -44,6 +45,7 @@ PUBLIER = {
     'complement_herite': True,           # duo / trio : compléments demandés sur ses pièces (décision du 29/10 : comme les matelas)
 }
 MATELAS_LIT_DEMANDES = {2274, 11}         # Confort Baby 120x60 et 140x70
+MATELAS_LIT_JUNIOR = {9, 8}               # Montana 90x190 et 90x200
 SEUIL_DEGRADE = 0.05                      # part de fiches illisibles au-delà de laquelle toute la liste de la veille est reprise
 SEUIL_PAGES_VIDES = 0.2                   # part de pages lues mais sans texte (extraction cassée) qui rend la lecture dégradée
 
@@ -101,17 +103,32 @@ def ref_id(ref):
     return PAR_REF.get(str(ref).strip().upper())
 
 
+def ref_de(pid):
+    return (FEED[pid].get('ref') or '').strip().upper() if pid in FEED else ''
+
+
+def demandes(pid):
+    """Références demandées pour une fiche, dans l'ordre : par id (COMPLEMENTS), par référence de la fiche
+    (COMPLEMENTS_PAR_REF), puis règles par motif de référence (COMPLEMENTS_MOTIFS, cibles absentes ignorées)."""
+    out = list(COMPLEMENTS.get(pid, [])) + list(COMPLEMENTS_PAR_REF.get(ref_de(pid), []))
+    for motif, cibles in COMPLEMENTS_MOTIFS:
+        m = re.fullmatch(motif, ref_de(pid))
+        if m:
+            out += [c.format(p=m.group(1)) for c in cibles if ref_id(c.format(p=m.group(1)))]
+    return list(dict.fromkeys(str(r).strip().upper() for r in out))
+
+
 def complements_de(pid):
     """[(id produit, origine)] : demandés pour la fiche (origine « demandé »), puis, pour un duo ou un trio, ceux de ses
     pièces (origine = id de la pièce), sans doublon ; références absentes du flux ignorées (voir refs_inconnues())."""
     out, vus = [], set()
-    for ref in COMPLEMENTS.get(pid, []):
+    for ref in demandes(pid):
         cid = ref_id(ref)
         if cid and cid not in vus and cid != pid:
             out.append((cid, 'demandé')); vus.add(cid)
     if pid in PACKS and pid in items and pack_type(pid) in ROOM_SETS:
         for piece in PACKS[pid]:
-            for ref in COMPLEMENTS.get(piece, []):
+            for ref in demandes(piece):
                 cid = ref_id(ref)
                 if cid and cid not in vus and cid != pid:
                     out.append((cid, piece)); vus.add(cid)
@@ -119,12 +136,17 @@ def complements_de(pid):
 
 
 def refs_inconnues():
-    """{référence: [fiches qui la demandent]} pour les références absentes du flux (produit hors ligne, coquille)."""
+    """{référence: [fiches ou références qui la demandent]} pour les références explicites absentes du flux (produit
+    hors ligne, coquille). Les règles par motif ne comptent pas : une collection sans spirale n'est pas une erreur."""
     out = {}
     for pid, refs in COMPLEMENTS.items():
         for ref in refs:
             if not ref_id(ref):
                 out.setdefault(str(ref).strip().upper(), []).append(pid)
+    for src, refs in COMPLEMENTS_PAR_REF.items():
+        for ref in refs:
+            if not ref_id(ref):
+                out.setdefault(str(ref).strip().upper(), []).append(ref_id(src) or src)
     return out
 
 
@@ -145,6 +167,8 @@ def categorie(pid, cid, origine, ligne_matelas=None):
             return 'matelas_lit_a_corriger'
         if regle != 'berceau' and (tm in ('duo', 'trio', 'duo_armoire') or cid in MATELAS_LIT_DEMANDES):
             return 'matelas_lit_demande'
+        if regle != 'berceau' and cid in MATELAS_LIT_JUNIOR:
+            return 'matelas_lit_junior'
         return 'matelas_lit_autre'
     if role == 'sommier':
         return 'sommier'

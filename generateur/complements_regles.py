@@ -45,7 +45,8 @@ COMPLEMENTS = {
     4162: ['ESPN1'],  # Commode 3 tiroirs et dispositif à langer ACCE — « panière de rangement ESPN1 »
     4163: ['PRHM5', 'WVHM5'],  # Commode 3 tiroirs et dispositif à langer ACCE — « housse de matelas à langer complémentaires PRHM5 et WVHM5 »
     # commentaires de la cliente du 30/10/2026
-    2274: ['ECDR5', 'SADR5', 'TBDR5'],  # Matelas 120x60 Confort Baby — « drap housse Unis les 4 références » (3 au catalogue)
+    2274: ['ECDR5', 'SADR5', 'TBDR5'],
+    11: ['ECDR5', 'SADR5', 'TBDR5'],  # Matelas 140x70 Confort Baby — 02/11 : « les mêmes draps housse que le matelas 120*60 »  # Matelas 120x60 Confort Baby — « drap housse Unis les 4 références » (3 au catalogue)
     4136: ['ECDR5', 'SADR5', 'TBDR5'],  # LITTLE BIG BED 140x70 BASILE — « drap housse Unis les 4 références »
     4140: ['ECPN1', 'TBPN1', 'SAPN1'],  # Commode 6 tiroirs et dispositif à langer BOHÈME — « panière ECPN1 ou TBPN1 ou SAPN1 »
     3756: ['PK025'],  # Trousseau maternité pour le bain - Promenons-nous — « Trousseau 1 mois - Promenons-nous »
@@ -56,3 +57,22 @@ COMPLEMENTS = {
 
 # demandes sans référence exploitable (question posée à la cliente)
 SANS_REFERENCE = {}
+
+# Demandes de la cliente du 02/11/2026 (hors tableau), par référence de la fiche : référence -> références proposées.
+# Orsino : pyjamas et lots de bodies (bonnet, trousseau) de la même taille, dans les deux sens.
+COMPLEMENTS_PAR_REF = {
+    'WVPY1': ['WVBD1', 'WVBN1', 'PK022'], 'WVPY5': ['WVBD1', 'WVBN1', 'PK022'],   # naissance
+    'WVPY2': ['WVBD2', 'PK038'], 'WVPY6': ['WVBD2', 'PK038'],                     # 1 mois
+    'WVPY3': ['WVBD3'], 'WVPY7': ['WVBD3'],                                       # 3 mois
+    'WVBD1': ['WVPY1', 'WVPY5'], 'WVBN1': ['WVPY1', 'WVPY5'], 'PK022': ['WVPY1', 'WVPY5'],
+    'WVBD2': ['WVPY2', 'WVPY6'], 'PK038': ['WVPY2', 'WVPY6'],
+    'WVBD3': ['WVPY3', 'WVPY7'],
+}
+
+# Règles par motif de référence : (motif de la référence de la fiche, références proposées), {p} = 2 premières lettres
+# (la collection). Une référence absente du catalogue est simplement ignorée.
+COMPLEMENTS_MOTIFS = [
+    (r'(..)NA[12]', ['{p}CV1', '{p}SL1']),   # nid d'ange : couverture et spirale de la même collection
+    (r'(..)CV[12]', ['{p}NA1', '{p}SL1']),   # couverture : nid d'ange et spirale de la même collection
+]
+

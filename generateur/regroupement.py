@@ -122,6 +122,8 @@ MERGES = [  # (ids, commentaire)
     ([3296, 3297, 3298, 3299], 'Gigoteuses ouatinées Orsino : naissance Nuages, 0-6 mois Maison ou Ours, 6-24 mois Ours'),
     ([2684, 2685, 2686, 2687], 'Gigoteuses Esmée : motif floral et Terracotta dans un même sélecteur'),
     ([2739, 2740, 2741, 2742, 2743, 2744, 2745, 2746, 2747], 'Gigoteuses Promenons-nous : motif végétal, Tilleul, Jaune topaze'),
+    # demandes de la cliente du 02/11/2026 (hors tableau)
+    ([3031, 3032], 'Lits 120x60 tout barreaux FIRST 2H035 (Blanc) / 2H038 (vernis naturel = Bois)'),
 ]
 # libellé du sélecteur « couleur » d'un regroupement (clé : 1er id du regroupement) : Couleur par défaut
 GROUP_ATTR = {3951: 'Modèle', 3296: 'Motif', 2684: 'Coloris', 2739: 'Coloris', 2960: 'Modèle', 2972: 'Modèle'}  # tout id du regroupement convient
@@ -155,6 +157,8 @@ OVERRIDES = {4034: {'c': 'Bois blanc', 's': '140x70'}, 3383: {'c': 'Blanc'}, 317
              2684: {'c': 'Motif floral'}, 2686: {'c': 'Motif floral'},
              2739: {'c': 'Motif végétal'}, 2742: {'c': 'Motif végétal'}, 2743: {'c': 'Motif végétal'}}
 EXCLUDE = set()  # 4034 n'est pas un doublon de 4033 : c'est le trio Access Bois Blanc (2809 + 2810 + 2811)
+OVERRIDES[3032] = {'c': 'Bois'}   # 02/11 : « blanc ou bois » (titre : vernis naturel)
+
 
 
 def family_of(r):
@@ -305,6 +309,40 @@ try:
     GONE = {int(k) for k, v in json.load(open('packs.json')).items() if v.get('gone')}
 except FileNotFoundError:
     GONE = set()
+
+# Règles par référence PrestaShop (cliente, 02/11/2026) : dans une même collection (2 premières lettres de la référence),
+# nid d'ange xxNA1 / nid d'ange hiver xxNA2, et couverture xxCV1 / couverture maille xxCV2, en variantes l'un de l'autre
+# (sélecteur « Modèle »). Une collection qui a plusieurs couvertures maille (ex. Chao Chao QJCV2 bleue, QJCV3 rose) les
+# garde toutes, avec leur couleur. Les nouvelles collections suivent la règle d'elles-mêmes.
+REF_ID, _ROW = {}, {}
+for r_ in rows:
+    if r_.get('ref'):
+        REF_ID.setdefault(r_['ref'].strip().upper(), int(r_['id']))
+        _ROW.setdefault(r_['ref'].strip().upper(), r_)
+FEMININ = {'bleu': 'bleue', 'gris': 'grise', 'vert': 'verte', 'blanc': 'blanche', 'noir': 'noire', 'brun': 'brune'}
+
+
+def _set(pid, **vals):
+    OVERRIDES[pid] = {**OVERRIDES.get(pid, {}), **vals}
+
+
+for p_ in sorted({k[:2] for k in REF_ID if re.fullmatch(r'[A-Z0-9]{2}(NA|CV)\d+', k)}):
+    if p_ + 'NA1' in REF_ID and p_ + 'NA2' in REF_ID:
+        na1, na2 = REF_ID[p_ + 'NA1'], REF_ID[p_ + 'NA2']
+        MERGES.append(([na1, na2], f"Nids d'ange {p_}NA1 / {p_}NA2 (demande du 02/11/2026)"))
+        _set(na1, c='Classique', saison=None)
+        _set(na2, c='Hiver', saison=None)
+        GROUP_ATTR[na1] = 'Modèle'
+    if p_ + 'CV1' in REF_ID and p_ + 'CV2' in REF_ID:
+        mailles = [k for k in sorted(REF_ID) if re.fullmatch(p_ + r'CV\d+', k) and k != p_ + 'CV1'
+                   and (k == p_ + 'CV2' or 'maille' in norm(_ROW[k]['t']))]
+        MERGES.append(([REF_ID[p_ + 'CV1']] + [REF_ID[k] for k in mailles],
+                       f'Couvertures {p_}CV1 / {" / ".join(mailles)} (demande du 02/11/2026)'))
+        _set(REF_ID[p_ + 'CV1'], c='Classique')
+        for k in mailles:
+            coul = analyse(_ROW[k]).get('c') if len(mailles) > 1 else None
+            _set(REF_ID[k], c='Maille' + (' ' + FEMININ.get(norm(coul), coul.lower()) if coul else ''))
+        GROUP_ATTR[REF_ID[p_ + 'CV1']] = 'Modèle'
 
 items = {}
 for r in rows:
