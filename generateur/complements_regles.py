@@ -59,14 +59,16 @@ COMPLEMENTS = {
 SANS_REFERENCE = {}
 
 # Demandes de la cliente du 02/11/2026 (hors tableau), par référence de la fiche : référence -> références proposées.
-# Orsino : pyjamas et lots de bodies (bonnet, trousseau) de la même taille, dans les deux sens.
-COMPLEMENTS_PAR_REF = {
-    'WVPY1': ['WVBD1', 'WVBN1', 'PK022'], 'WVPY5': ['WVBD1', 'WVBN1', 'PK022'],   # naissance
-    'WVPY2': ['WVBD2', 'PK038'], 'WVPY6': ['WVBD2', 'PK038'],                     # 1 mois
-    'WVPY3': ['WVBD3'], 'WVPY7': ['WVBD3'],                                       # 3 mois
-    'WVBD1': ['WVPY1', 'WVPY5'], 'WVBN1': ['WVPY1', 'WVPY5'], 'PK022': ['WVPY1', 'WVPY5'],
-    'WVBD2': ['WVPY2', 'WVPY6'], 'PK038': ['WVPY2', 'WVPY6'],
-    'WVBD3': ['WVPY3', 'WVPY7'],
+# Les pyjamas, lots de bodies, bonnets et trousseaux de toutes les collections sont reliés par taille dans encart.py
+# (liens_layette : règle d'Orsino étendue aux autres collections, réponse du 02/11 ; pack Orsino 1 mois = PK028).
+COMPLEMENTS_PAR_REF = {}
+# Lits combinés dont le matelas à langer est fourni (réponse du 02/11 : matelas à langer « sauf EW101 et BJ101 », « ajouter
+# housse de matelas à langer EC, WV, SA, TB ») : pas de matelas à langer, mais les housses de matelas à langer (références
+# xxHMn) des collections EC (uni Vanilla), WV (Orsino), SA (uni Sauge) et TB (uni Terracotta), dans cet ordre. Aujourd'hui
+# seule la housse Orsino (WVHM5) est vendue seule ; les autres s'ajouteront d'elles-mêmes si elles arrivent au catalogue.
+HOUSSES_LIT_COMBINE = {
+    'EW101': ['EC', 'WV', 'SA', 'TB'],   # Lit bébé combiné évolutif 140x70 Paloma
+    'BJ101': ['EC', 'WV', 'SA', 'TB'],   # Lit bébé combiné 140x70 évolutif Balloon
 }
 
 # Règles par motif de référence : (motif de la référence de la fiche, références proposées), {p} = 2 premières lettres

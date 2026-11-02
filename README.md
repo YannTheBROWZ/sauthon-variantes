@@ -25,19 +25,21 @@ affichés sur les fiches produit de [sauthon.com](https://www.sauthon.com) par u
 Le second tag GTM ([tag/tag-gtm-pour-completer.html](tag/tag-gtm-pour-completer.html)) propose sous le bouton panier
 jusqu'à 3 produits : le plan à langer assorti, les matelas (`generateur/matelas.py`, à partir des fiches lues par
 `generateur/lire_fiches_matelas.py`) et les compléments demandés par Sauthon par référence produit — draps housse,
-housses de matelas à langer, panières… (`generateur/complements_regles.py`), assemblés par `generateur/encart.py`
+housses de matelas à langer, panières… (`generateur/complements_regles.py`) ou par règle (pyjamas, bodies, bonnet et
+trousseau de la même taille ; nid d'ange, couverture et spirale de la collection), assemblés par `generateur/encart.py`
 (liste « l » du fichier publié). **Seules les règles validées par Sauthon sont publiées** (`PUBLIER` dans
-`generateur/encart.py`, décision du 31/10/2026 : plans à langer, matelas de lit des lits 120x60 / 140x70, des duos et
-des trios, compléments demandés, housses des matelas à langer) ; les autres propositions (matelas à langer, sommiers,
-matelas des berceaux et lits junior…) restent « à valider » dans le tableau de validation. Pour en publier une, passer sa
-règle à `True`. Une fiche illisible pendant la lecture du site garde sa liste de la veille.
+`generateur/encart.py`) : depuis le 02/11/2026, toutes les règles de matelas (matelas à langer relié dans PrestaShop,
+sinon unis Vanilla, Sauge et Terracotta ; lits combinés ; berceaux et lits 100x50) sauf le matelas des fiches dont le titre
+et la description ne donnent pas la même taille, qui reste « à valider » dans le tableau de validation. Pour publier une
+règle, passer sa valeur à `True`. Une fiche illisible pendant la lecture du site garde sa liste de la veille.
 Sa table des plans est publiée à chaque génération dans
 <https://yannthebrowz.github.io/sauthon-variantes/pour-completer.json> par `generateur/pour_completer.py` :
 
 - elle part des correspondances validées (`TABLE_VALIDEE` dans `generateur/pour_completer_regles.py`) ;
 - retire automatiquement les fiches ou plans à langer sortis du flux (ils reviennent quand ils y reviennent) ;
 - ajoute automatiquement les nouveautés sans ambiguïté : un seul plan à langer dans les accessoires PrestaShop
-  d'une nouvelle fiche, ou nouveau duo / trio dont la commode a déjà son plan ;
+  d'une nouvelle fiche, commode XXL en référence xx165 et dispositif à langer xx955 de sa collection (règle de la
+  cliente, 02/11/2026), ou nouveau duo / trio dont la commode a déjà son plan ;
 - n'ajoute jamais les fiches de `A_VALIDER` (en attente du client) ni d'`EXCLUS`.
 
 Pour refuser une suggestion ou retirer une correspondance validée, **déplacer la fiche dans `EXCLUS`** (avec la raison) :
@@ -96,3 +98,7 @@ relance aussi la génération.
 
 Les règles manuelles sont en tête de `generateur/regroupement.py` : `MERGES` (produits à regrouper),
 `OVERRIDES` (libellé de couleur / taille forcé), `EXCLUDE` (produits à ignorer), `LINE` (gammes Paloma).
+Règles par référence (cliente, 02/11/2026) : nids d'ange xxNA1 / xxNA2 (Classique / Hiver) ; toutes les couvertures
+maille réunies dans un sélecteur « Modèle », toutes collections confondues ; sur la couverture polaire xxCV1 d'une
+collection, sélecteur Polaire / Maille (`GROUPES_SECONDAIRES` : groupe affiché seulement sur la page d'un produit qui
+n'est dans aucun autre groupe, la balise prenant le premier groupe qui contient la fiche).

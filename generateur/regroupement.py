@@ -311,38 +311,66 @@ except FileNotFoundError:
     GONE = set()
 
 # Règles par référence PrestaShop (cliente, 02/11/2026) : dans une même collection (2 premières lettres de la référence),
-# nid d'ange xxNA1 / nid d'ange hiver xxNA2, et couverture xxCV1 / couverture maille xxCV2, en variantes l'un de l'autre
-# (sélecteur « Modèle »). Une collection qui a plusieurs couvertures maille (ex. Chao Chao QJCV2 bleue, QJCV3 rose) les
-# garde toutes, avec leur couleur. Les nouvelles collections suivent la règle d'elles-mêmes.
+# nid d'ange xxNA1 / nid d'ange hiver xxNA2 en variantes l'un de l'autre (sélecteur « Modèle » : Classique / Hiver, libellé
+# validé le 02/11). Les nouvelles collections suivent la règle d'elles-mêmes.
+# Couvertures (réponses du 02/11) : « les couvertures maille, toutes en variantes, toutes collections confondues » :
+# un sélecteur « Modèle » qui les réunit (nom de la collection, plus la couleur quand une collection en a plusieurs). Une
+# collection qui a aussi sa couverture xxCV1 (100 % polyester : « Polaire », demandé pour Chao Chao) garde le sélecteur
+# « Polaire / Maille » de la demande du 02/11, sur la page de la polaire (groupe secondaire, GROUPES_SECONDAIRES).
 REF_ID, _ROW = {}, {}
 for r_ in rows:
     if r_.get('ref'):
         REF_ID.setdefault(r_['ref'].strip().upper(), int(r_['id']))
         _ROW.setdefault(r_['ref'].strip().upper(), r_)
 FEMININ = {'bleu': 'bleue', 'gris': 'grise', 'vert': 'verte', 'blanc': 'blanche', 'noir': 'noire', 'brun': 'brune'}
+# groupes affichés seulement sur la page d'un produit qui n'est dans aucun autre groupe : [(ids, sélecteur, {id: valeur})]
+GROUPES_SECONDAIRES = []
 
 
 def _set(pid, **vals):
     OVERRIDES[pid] = {**OVERRIDES.get(pid, {}), **vals}
 
 
-for p_ in sorted({k[:2] for k in REF_ID if re.fullmatch(r'[A-Z0-9]{2}(NA|CV)\d+', k)}):
+def _feminin(coul):
+    return FEMININ.get(norm(coul), coul.lower())
+
+
+def _nom_maille(r):
+    """Nom de la collection d'une couverture maille, lu dans son titre : « Couverture maille Bleu Chao Chao » -> Chao Chao."""
+    t = re.sub(r'(?i)^\s*couverture\s+(?:b[ée]b[ée]\s+)?maille\s*', '', r['t'].strip())
+    t = re.sub(r'(?i)\b\d{2,3}\s*[x×]\s*\d{2,3}\s*(?:cm)?\b', ' ', t)
+    coul = analyse(r).get('c')
+    if coul:
+        t = re.sub(rf'(?i)(?<![^\W\d_]){re.escape(coul)}(?![^\W\d_])', ' ', t, count=1)
+    return re.sub(r'\s+', ' ', t).strip(' -–'), coul
+
+
+for p_ in sorted({k[:2] for k in REF_ID if re.fullmatch(r'[A-Z0-9]{2}NA\d+', k)}):
     if p_ + 'NA1' in REF_ID and p_ + 'NA2' in REF_ID:
         na1, na2 = REF_ID[p_ + 'NA1'], REF_ID[p_ + 'NA2']
         MERGES.append(([na1, na2], f"Nids d'ange {p_}NA1 / {p_}NA2 (demande du 02/11/2026)"))
         _set(na1, c='Classique', saison=None)
         _set(na2, c='Hiver', saison=None)
         GROUP_ATTR[na1] = 'Modèle'
-    if p_ + 'CV1' in REF_ID and p_ + 'CV2' in REF_ID:
-        mailles = [k for k in sorted(REF_ID) if re.fullmatch(p_ + r'CV\d+', k) and k != p_ + 'CV1'
-                   and (k == p_ + 'CV2' or 'maille' in norm(_ROW[k]['t']))]
-        MERGES.append(([REF_ID[p_ + 'CV1']] + [REF_ID[k] for k in mailles],
-                       f'Couvertures {p_}CV1 / {" / ".join(mailles)} (demande du 02/11/2026)'))
-        _set(REF_ID[p_ + 'CV1'], c='Classique')
-        for k in mailles:
-            coul = analyse(_ROW[k]).get('c') if len(mailles) > 1 else None
-            _set(REF_ID[k], c='Maille' + (' ' + FEMININ.get(norm(coul), coul.lower()) if coul else ''))
-        GROUP_ATTR[REF_ID[p_ + 'CV1']] = 'Modèle'
+
+MAILLES = [k for k in sorted(REF_ID) if re.fullmatch(r'[A-Z0-9]{2}CV\d+', k) and 'maille' in norm(_ROW[k]['t'])]
+if len(MAILLES) >= 2:
+    noms_ = {k: _nom_maille(_ROW[k]) for k in MAILLES}
+    for k in MAILLES:
+        nom_, coul_ = noms_[k]
+        plusieurs = sum(1 for j in MAILLES if noms_[j][0] == nom_) > 1
+        _set(REF_ID[k], c=(nom_ or k) + (' ' + _feminin(coul_) if plusieurs and coul_ else ''))
+    MERGES.append(([REF_ID[k] for k in MAILLES], 'Couvertures maille de toutes les collections (demande du 02/11/2026)'))
+    GROUP_ATTR[REF_ID[MAILLES[0]]] = 'Modèle'
+for p_ in sorted({k[:2] for k in MAILLES}):
+    mailles_ = [k for k in MAILLES if k.startswith(p_)]
+    if p_ + 'CV1' in REF_ID and p_ + 'CV1' not in MAILLES:
+        vals_ = {REF_ID[p_ + 'CV1']: 'Polaire'}
+        for k in mailles_:
+            coul_ = _nom_maille(_ROW[k])[1] if len(mailles_) > 1 else None
+            vals_[REF_ID[k]] = 'Maille' + (' ' + _feminin(coul_) if coul_ else '')
+        GROUPES_SECONDAIRES.append(([REF_ID[p_ + 'CV1']] + [REF_ID[k] for k in mailles_], 'Modèle', vals_,
+                                    f'Couvertures {p_}CV1 / {" / ".join(mailles_)} (demande du 02/11/2026)'))
 
 items = {}
 for r in rows:
@@ -427,6 +455,16 @@ for pid, (hote, vals) in EXTRA_MEMBERS.items():
     propre = next((i for i, g2 in enumerate(groups) if i != gi and any(m['id'] == pid for m in g2['members'])), None)
     if propre is not None and propre > gi:
         groups.append(groups.pop(gi))
+
+# groupes secondaires (GROUPES_SECONDAIRES) : en fin de liste, la balise prenant le 1er groupe qui contient la fiche, ils ne
+# s'affichent que sur la page d'un membre qui n'est dans aucun autre groupe (ex. la couverture polaire d'une collection)
+for ids, attr, vals, com in GROUPES_SECONDAIRES:
+    mem = [{**items[i], 'c': vals[i]} for i in ids if i in items]
+    seul = [m['id'] for m in mem if not any(m['id'] == x['id'] for g in groups for x in g['members'])]
+    if len(mem) < 2 or len({m['c'] for m in mem}) < len(mem) or not seul:
+        issues.append((f'Groupe secondaire non créé : {com}', ids))
+        continue
+    groups.append({'key': ('SECONDAIRE', ids[0]), 'dims': ['c'], 'members': mem, 'attr': attr})
 
 # ---------- Composition ----------
 COMP_LABEL = {'lit': 'Lit seul', 'commode': 'Commode seule', 'armoire': 'Armoire seule', 'pack': 'Commode + plan à langer',

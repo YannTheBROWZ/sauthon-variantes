@@ -19,8 +19,9 @@ def size_display(v):
     return v + ' cm' if re.fullmatch(r'\d+x\d+', v or '') else (v.replace(' et ', ' et ') + ' cm' if re.fullmatch(r'\d+x\d+ et \d+x\d+', v or '') else v)
 
 
-# ordre d'affichage imposé pour certaines valeurs (sinon ordre alphabétique) : Basic, ordre validé le 29/10/2026
-ORDRE_VALEURS = {'Boutons boule blanc': 0, 'Boutons étoile gris': 1, 'Boutons cœur rose': 2}
+# ordre d'affichage imposé pour certaines valeurs (sinon ordre alphabétique) : Basic, ordre validé le 29/10/2026 ;
+# nids d'ange et couvertures (02/11/2026) : le modèle de base d'abord (Classique / Hiver, Polaire / Maille)
+ORDRE_VALEURS = {'Boutons boule blanc': 0, 'Boutons étoile gris': 1, 'Boutons cœur rose': 2, 'Classique': 0, 'Polaire': 0}
 BED = {'lit', 'duo', 'trio', 'duo_armoire'}
 values, vindex = [], {}
 

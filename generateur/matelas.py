@@ -27,7 +27,7 @@ RAISON = {int(m.group(1)): m.group(2) for m in re.finditer(r'^\s*(\d+),\s*#\s*(.
 LIT_PAR_TAILLE = {(120, 60): 2274, (140, 70): 11, (100, 50): 4120, (190, 90): 9, (200, 90): 8}
 SOMMIER_PAR_TAILLE = {(190, 90): 6, (200, 90): 7}
 BERCEAU = {'bambin': 2484, 'galopin': 2482, 'eclipse': 2487, 'lune': 2485}
-MATELAS_LANGER_DEFAUT = 3194          # Matelas à langer + housse + serviette uni Vanilla, 52x68x6 cm
+MATELAS_LANGER_DEFAUT = 3194          # Matelas à langer + housse + serviette uni Vanilla, 52x68x6 cm (puis Sauge, Terracotta : encart.py)
 MATELAS_BOREALE = 2628                # « Matelas à langer commodes Boréale. Bambin. Galopin »
 NOMS_COURTS = {4120: 'Matelas 100x50x10 Confort Baby', 9: 'Matelas Montana 90x190', 8: 'Matelas Montana 90x200',
                6: 'Sommier à lattes 90x190', 7: 'Sommier à lattes 90x200', 2274: 'Matelas 120x60 Confort Baby',
@@ -295,7 +295,8 @@ for pid in sorted(items):
             mal, pr, regle = matelas_langer(pid)
             if mal:
                 candidats.append({'id': mal, 'role': 'matelas_langer', 'regle': 'lit_combine' if lit_combine else regle,
-                                  'preuve': pr + (' (lit combiné : règle à valider)' if lit_combine else '')})
+                                  'defaut': regle in ('defaut', 'suppose'),   # encart.py : les autres unis le suivent
+                                  'preuve': pr + (' (lit combiné)' if lit_combine else '')})
             else:
                 notes.append(f'matelas à langer : {pr}')
     retenus = candidats                  # toutes les propositions : encart.py filtre (PUBLIER) puis coupe à MAX_LIGNES

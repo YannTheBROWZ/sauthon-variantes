@@ -4,7 +4,8 @@ Part de TABLE_VALIDEE (pour_completer_regles.py), puis :
 - retire les fiches ou plans à langer sortis du flux (ils reviennent tout seuls quand ils y reviennent) ;
 - ajoute les nouvelles fiches reliables sans ambiguïté :
   1. un seul plan à langer présent dans les accessoires PrestaShop de la fiche ;
-  2. duo / trio dont la commode (contenu réel du pack) a déjà son plan.
+  2. commode XXL en référence xx165 -> dispositif à langer xx955 de la même collection (règle de la cliente, 02/11/2026) ;
+  3. duo / trio dont la commode (contenu réel du pack) a déjà son plan.
 Écrit pc_data.json (données publiées) et pc_status.json (ajouts / retraits pour status.json).
 Les fiches de A_VALIDER, d'EXCLUS et les entrées validées retirées ne sont jamais ajoutées automatiquement.
 """
@@ -55,7 +56,21 @@ for pid in sorted(ACC):
     if len(cands) == 1:
         add(pid, cands[0], 'accessoire PrestaShop')
 
-# 2. duo / trio dont la commode a déjà son plan à langer
+# 2. commode XXL (référence en 165) -> dispositif à langer de la même collection (référence en 955) : règle de la cliente
+#    (02/11/2026). « XXL » doit figurer dans le titre de la commode ou du plan (19165, 68165, PF165 ne sont pas des XXL).
+REF_PID = {}
+for r in rows:
+    if r.get('ref'):
+        REF_PID.setdefault(r['ref'].strip().upper(), int(r['id']))
+for ref, pid in sorted(REF_PID.items()):
+    m = re.fullmatch(r'([A-Z0-9]{2})165', ref)
+    plan = REF_PID.get(m.group(1) + '955') if m else None
+    if not plan or pid in blocked or pid in entries or not available(pid) or not is_plan(plan):
+        continue
+    if 'xxl' in title_of(items[pid]['t']) or 'xxl' in title_of(items[plan]['t']):
+        add(pid, plan, 'commode XXL (référence en 165) et dispositif à langer de sa collection (en 955)')
+
+# 3. duo / trio dont la commode a déjà son plan à langer (y compris par la règle 2)
 for sid in sorted(PACKS):
     if sid in blocked or sid in entries or not available(sid) or pack_type(sid) not in ('duo', 'trio'):
         continue

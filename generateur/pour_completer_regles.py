@@ -151,13 +151,14 @@ TABLE_VALIDEE = {
     4116: 4118,  # COMMODE 6 TIROIRS BOHEME — validé par la cliente le 30/10/2026
     4137: 4118,  # Pack duo lit bébé évolutif 140x70 et commode 6 tiroirs BOHÈME — validé par la cliente le 30/10/2026
     4138: 4118,  # Pack chambre bébé complète lit évolutif 140x70, commode et armoire BOHÈME — validé par la cliente le 30/10/2026
+    # réponse de la cliente du 02/11/2026 : « commodes XXL finissant en 165 : ajouter les dispositifs à langer de la même
+    # collection finissant en 955 » (règle automatique dans pour_completer.py pour les prochaines)
+    4124: 4125,  # COMMODE XXL MOKKA (MO165 -> MO955)
+    4153: 4125,  # Pack duo lit bébé évolutif 140x70 et commode XXL 5 tiroirs MOKKA (commode MO165)
+    4133: 4134,  # COMMODE XXL 6 TIROIRS ARTY (1J165 -> 1J955)
 }
 
 A_VALIDER = {
-    # Nouveautés d'octobre : PrestaShop vend la paire commode + plan en pack, mais rien ne relie automatiquement ces fiches
-    4124: 4125,  # COMMODE XXL MOKKA
-    4153: 4125,  # Pack duo lit bébé évolutif 140x70 et commode XXL 5 tiroirs MOKKA
-    4133: 4134,  # COMMODE XXL 6 TIROIRS ARTY
     2098: 2101,  # Commode 1 porte et 3 tiroirs Seventies version Bois — Version Bois : 2101 (dessus chêne, joues blanches, comme la version Blanc) ou 3275 (tout chêne doré) ?
 }
 
