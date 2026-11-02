@@ -61,7 +61,13 @@ SANS_REFERENCE = {}
 # Demandes de la cliente du 02/11/2026 (hors tableau), par référence de la fiche : référence -> références proposées.
 # Les pyjamas, lots de bodies, bonnets et trousseaux de toutes les collections sont reliés par taille dans encart.py
 # (liens_layette : règle d'Orsino étendue aux autres collections, réponse du 02/11 ; pack Orsino 1 mois = PK028).
-COMPLEMENTS_PAR_REF = {}
+COMPLEMENTS_PAR_REF = {
+    # 2e message du 02/11 : berceaux ovales Galopin -> matelas berceau ovale et draps housse ovales (5 coloris) ;
+    # berceaux Bambin -> matelas berceau et draps housse rectangulaires ; meuble à langer Galopin -> housses ovales
+    **{r: ['899666', 'JZDH1', 'KHDH1', 'QNDH1', 'VGDH1', 'XYDH1'] for r in ('68152', '68154', '68155', '68156')},
+    **{r: ['899669', 'JZDH2', 'KHDH2', 'QNDH2', 'VGDH2', 'XYDH2'] for r in ('19152', '19154', '19155', '19156')},
+    '68437': ['JZHM2', 'KHHM2', 'QNHM2', 'VGHM2', 'XYHM2'],   # Meuble à langer blanc pieds bois Galopin
+}
 # Lits combinés dont le matelas à langer est fourni (réponse du 02/11 : matelas à langer « sauf EW101 et BJ101 », « ajouter
 # housse de matelas à langer EC, WV, SA, TB ») : pas de matelas à langer, mais les housses de matelas à langer (références
 # xxHMn) des collections EC (uni Vanilla), WV (Orsino), SA (uni Sauge) et TB (uni Terracotta), dans cet ordre. Aujourd'hui

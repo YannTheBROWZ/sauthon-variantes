@@ -353,6 +353,17 @@ for p_ in sorted({k[:2] for k in REF_ID if re.fullmatch(r'[A-Z0-9]{2}NA\d+', k)}
         _set(na2, c='Hiver', saison=None)
         GROUP_ATTR[na1] = 'Modèle'
 
+# Demandes de la cliente du 02/11/2026 (2e message), par référence : berceaux Galopin et Bambin en variantes (le coloris
+# blanc / bois n'a pas le même titre que les autres), draps housse de berceau Sauthon Original ovales (xxDH1) et
+# rectangulaires (xxDH2) en variantes, Jaune Topaze compris (titre différent des autres coloris).
+for refs_, com_ in ((('68152', '68154', '68155', '68156'), 'Berceaux ovales Galopin (demande du 02/11/2026)'),
+                    (('19152', '19154', '19155', '19156'), 'Berceaux Bambin (demande du 02/11/2026)'),
+                    (tuple(c_ + 'DH' + n_ for n_ in '12' for c_ in ('JZ', 'KH', 'QN', 'VG', 'XY')),
+                     'Draps housse de berceau Sauthon Original, ovales et rectangulaires (demande du 02/11/2026)')):
+    ids_ = [REF_ID[r_] for r_ in refs_ if r_ in REF_ID]
+    if len(ids_) >= 2:
+        MERGES.append((ids_, com_))
+
 MAILLES = [k for k in sorted(REF_ID) if re.fullmatch(r'[A-Z0-9]{2}CV\d+', k) and 'maille' in norm(_ROW[k]['t'])]
 if len(MAILLES) >= 2:
     noms_ = {k: _nom_maille(_ROW[k]) for k in MAILLES}
