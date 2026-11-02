@@ -51,9 +51,11 @@ PUBLIER = {
 MATELAS_LIT_DEMANDES = {2274, 11}         # Confort Baby 120x60 et 140x70
 MATELAS_LIT_JUNIOR = {9, 8}               # Montana 90x190 et 90x200
 # Matelas à langer par défaut (aucun relié dans PrestaShop) : « les unis, EC, SA, TB » (réponse du 02/11). Le 1er (uni
-# Vanilla, calculé par matelas.py) garde la place du matelas ; Sauge et Terracotta le suivent s'il reste de la place
-# (les compléments demandés passent avant eux).
+# Vanilla, calculé par matelas.py) garde la place du matelas. Un seul coloris de matelas à langer (réponse du 02/11 au
+# soir : « là où il y a plusieurs coloris de matelas à langer, en laisser un seul et mettre un drap à la place ») : le drap
+# housse uni du même coloris (60x120 / 70x140) le suit s'il reste de la place (les compléments demandés passent avant).
 UNIS_DEFAUT = ('ECML1', 'SAML1', 'TBML1')
+DRAP_UNI = {'ECML1': 'ECDR5', 'SAML1': 'SADR5', 'TBML1': 'TBDR5'}
 SEUIL_DEGRADE = 0.05                      # part de fiches illisibles au-delà de laquelle toute la liste de la veille est reprise
 SEUIL_PAGES_VIDES = 0.2                   # part de pages lues mais sans texte (extraction cassée) qui rend la lecture dégradée
 
@@ -280,9 +282,6 @@ def candidates(pid, proposition=False):
     return [c for c in out if c[0] != pid]
 
 
-UNIS = [i for i in (ref_id(r) for r in UNIS_DEFAUT) if i in items]
-
-
 def defaut_langer(pid, cid):
     """Le matelas à langer cid est-il proposé par défaut sur la fiche (aucun matelas relié dans PrestaShop) ?"""
     return any(l['id'] == cid and l['role'] == 'matelas_langer' and l.get('defaut')
@@ -293,8 +292,8 @@ def lignes(pid, proposition=False):
     """(publiées, coupées, à valider), listes de (id produit, rôle, origine, catégorie) sans doublon d'un produit :
     publiées = ce que le site affiche (règles PUBLIER), MAX_LIGNES au plus ; coupées = publiables mais au-delà de
     MAX_LIGNES ; à valider = propositions dont la règle n'est pas encore validée (proposition=True : avec le plan en
-    attente de validation). Matelas à langer par défaut publié : les autres unis (origine « uni ») le suivent dans les
-    places restées libres."""
+    attente de validation). Matelas à langer par défaut publié : le drap housse uni du même coloris (origine « uni ») le
+    suit si une place est restée libre."""
     pub, a_valider, vus = [], [], set()
     cands = candidates(pid, proposition)
     for c in cands:
@@ -305,9 +304,10 @@ def lignes(pid, proposition=False):
             a_valider.append(c); vus.add(c[0])
     pub, coupees = pub[:MAX_LIGNES], pub[MAX_LIGNES:]
     k = next((i for i, c in enumerate(pub) if c[2] == 'matelas' and c[1] == 'ma' and defaut_langer(pid, c[0])), None)
-    if k is not None:
-        autres = [(u, 'ma', 'uni', pub[k][3]) for u in UNIS if u not in vus and u != pid][:MAX_LIGNES - len(pub)]
-        pub = pub[:k + 1] + autres + pub[k + 1:]
+    if k is not None and len(pub) < MAX_LIGNES:
+        drap = ref_id(DRAP_UNI.get(ref_de(pub[k][0]), ''))
+        if drap in items and drap not in vus and drap != pid:
+            pub = pub[:k + 1] + [(drap, 'dr', 'uni', pub[k][3])] + pub[k + 1:]
     return pub, coupees, a_valider
 
 

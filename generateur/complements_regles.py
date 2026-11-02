@@ -67,6 +67,8 @@ COMPLEMENTS_PAR_REF = {
     **{r: ['899666', 'JZDH1', 'KHDH1', 'QNDH1', 'VGDH1', 'XYDH1'] for r in ('68152', '68154', '68155', '68156')},
     **{r: ['899669', 'JZDH2', 'KHDH2', 'QNDH2', 'VGDH2', 'XYDH2'] for r in ('19152', '19154', '19155', '19156')},
     '68437': ['JZHM2', 'KHHM2', 'QNHM2', 'VGHM2', 'XYHM2'],   # Meuble à langer blanc pieds bois Galopin
+    # réponse du 02/11 au soir : meubles à langer Bambin (matelas fourni) -> housses rectangulaires 76x55 JZHM3 et KHHM3
+    **{r: ['JZHM3', 'KHHM3'] for r in ('19431', '19434', '19435', '19436')},
 }
 # Lits combinés dont le matelas à langer est fourni (réponse du 02/11 : matelas à langer « sauf EW101 et BJ101 », « ajouter
 # housse de matelas à langer EC, WV, SA, TB ») : pas de matelas à langer, mais les housses de matelas à langer (références

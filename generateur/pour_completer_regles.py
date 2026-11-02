@@ -156,10 +156,11 @@ TABLE_VALIDEE = {
     4124: 4125,  # COMMODE XXL MOKKA (MO165 -> MO955)
     4153: 4125,  # Pack duo lit bébé évolutif 140x70 et commode XXL 5 tiroirs MOKKA (commode MO165)
     4133: 4134,  # COMMODE XXL 6 TIROIRS ARTY (1J165 -> 1J955)
+    # réponse de la cliente du 02/11/2026 au soir : « VP163 avec VP951 »
+    2098: 2101,  # Commode 1 porte et 3 tiroirs Seventies version Bois (VP163 -> VP951 : dessus chêne, joues blanches)
 }
 
 A_VALIDER = {
-    2098: 2101,  # Commode 1 porte et 3 tiroirs Seventies version Bois — Version Bois : 2101 (dessus chêne, joues blanches, comme la version Blanc) ou 3275 (tout chêne doré) ?
 }
 
 EXCLUS = {
