@@ -27,7 +27,8 @@ jusqu'à 3 produits : le plan à langer assorti, les matelas (`generateur/matela
 `generateur/lire_fiches_matelas.py`) et les compléments demandés par Sauthon par référence produit — draps housse,
 housses de matelas à langer, panières… (`generateur/complements_regles.py`) ou par règle (pyjamas, bodies, bonnet et
 trousseau de la même taille ; nid d'ange, couverture et spirale de la collection ; trousses de toilette xxTT1 / xxTT2
-sur la cape de bain xxSB1 de la même collection), assemblés par `generateur/encart.py`
+sur la cape de bain xxSB1 de la même collection ; support bois 898505 sur les couffins xxCF1), assemblés par
+`generateur/encart.py`
 (liste « l » du fichier publié). **Seules les règles validées par Sauthon sont publiées** (`PUBLIER` dans
 `generateur/encart.py`) : depuis le 02/11/2026, toutes les règles de matelas (matelas à langer relié dans PrestaShop,
 sinon le matelas uni Vanilla, suivi du drap housse uni Vanilla s'il reste de la place ; lits combinés ; berceaux et lits
