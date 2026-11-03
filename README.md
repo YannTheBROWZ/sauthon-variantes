@@ -29,7 +29,8 @@ housses de matelas à langer, panières… (`generateur/complements_regles.py`) 
 trousseau de la même taille ; nid d'ange, couverture et spirale de la collection ; trousses de toilette xxTT1 / xxTT2
 sur la cape de bain xxSB1 de la même collection ; support bois 898505 sur les couffins xxCF1 ; pyjama et bodies 1 mois
 xxPY2 / xxBD2 sur les gigoteuses naissance et 0-6 mois ; balle xxBA1, cube xxCU1 et spirale xxSL1 entre eux, livre
-xxLI1 et cube sur le tapis d'éveil xxTS1), assemblés par
+xxLI1 et cube sur le tapis d'éveil xxTS1 ; housse de couette xxHC1 et peluche xxDD1 sur la gigoteuse ouatinée
+6-24 mois xxDO3), assemblés par
 `generateur/encart.py`
 (liste « l » du fichier publié). **Seules les règles validées par Sauthon sont publiées** (`PUBLIER` dans
 `generateur/encart.py`) : depuis le 02/11/2026, toutes les règles de matelas (matelas à langer relié dans PrestaShop,

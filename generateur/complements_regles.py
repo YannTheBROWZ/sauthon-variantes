@@ -91,5 +91,6 @@ COMPLEMENTS_MOTIFS = [
     (r'(..)CU1', ['{p}BA1', '{p}SL1']),
     (r'(..)SL1', ['{p}BA1', '{p}CU1']),
     (r'(..)TS1', ['{p}LI1', '{p}CU1']),
+    (r'(..)DO3', ['{p}HC1', '{p}DD1']),      # gigoteuse ouatinée 6-24 mois : housse de couette et peluche (demande du 03/11)
 ]
 
