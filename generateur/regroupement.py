@@ -364,6 +364,9 @@ for refs_, com_ in ((('68152', '68154', '68155', '68156'), 'Berceaux ovales Galo
     if len(ids_) >= 2:
         MERGES.append((ids_, com_))
 
+if 'XCPY3' in REF_ID and 'rosetaille' in norm(_ROW['XCPY3']['t']):
+    _set(REF_ID['XCPY3'], c='Rose')      # titre « Pyjama velours Rosetaille 3 mois » (espace manquant)
+
 MAILLES = [k for k in sorted(REF_ID) if re.fullmatch(r'[A-Z0-9]{2}CV\d+', k) and 'maille' in norm(_ROW[k]['t'])]
 if len(MAILLES) >= 2:
     noms_ = {k: _nom_maille(_ROW[k]) for k in MAILLES}
@@ -405,6 +408,110 @@ for ids, _ in MERGES:
     k = ('MERGE', ids[0])
     for i in ids:
         key_of[i] = k
+
+# ---------- Familles croisées (demandes de la cliente du 03/11/2026) ----------
+# Les mêmes articles de plusieurs collections, reconnus à la fin de leur référence (BWML1, QJML1, XCML1 : matelas à
+# langer), sont reliés par un sélecteur dont les valeurs sont les collections (+ la couleur quand une collection a
+# plusieurs couleurs du même article). Les articles d'une même collection déjà reliés entre eux (tailles, saisons…)
+# restent ensemble : le sélecteur des collections s'ajoute aux leurs. Un article déjà relié à des articles d'autres
+# collections (couvertures maille, appliques murales, couffins) garde son regroupement actuel.
+FAMILLES_CROISEES = [
+    ({'BW': 'Babyfan', 'XC': 'Miss Fleur de Lune', 'PP': 'Hello', 'LX': 'Lazare', 'QJ': 'Chao Chao'}, 'Modèle',
+     'Collections textiles Babyfan, Miss Fleur de Lune, Hello, Lazare et Chao Chao (demande du 03/11/2026)'),
+    ({'RL': 'Léopard', 'BO': 'Petit Chou'}, 'Coloris', 'Collections Léopard et Petit Chou (demande du 03/11/2026)'),
+]
+CROISES = []           # (ids, commentaire) : regroupements créés (tableau de validation)
+NON_CROISES = []       # (références, raison) : articles présents dans plusieurs collections mais laissés tels quels
+_AUTRES_DIMS = ['s', 'forme', 'col', 'manches', 'saison']
+
+
+def _ref_item(pid):
+    ref = (items[pid].get('ref') or '').strip().upper()
+    return ref if re.fullmatch(r'[A-Z0-9]{2}[A-Z]{2}\d+', ref) else ''
+
+
+for noms_, attr_, com_ in FAMILLES_CROISEES:
+    pids_ = [p for p in items if _ref_item(p)[:2] in noms_]
+    cle_membres = collections.defaultdict(list)
+    for p, k in key_of.items():
+        cle_membres[k].append(p)
+    parent_ = {}
+
+    def _racine(x):
+        while parent_.setdefault(x, x) != x:
+            parent_[x] = parent_[parent_[x]]
+            x = parent_[x]
+        return x
+
+    par_suffixe = collections.defaultdict(list)
+    for p in pids_:
+        par_suffixe[_ref_item(p)[2:]].append(p)
+    for suf, ps in sorted(par_suffixe.items()):
+        if len({_ref_item(p)[:2] for p in ps}) < 2:
+            continue
+        cles = {key_of.get(p) for p in ps}
+        if len(cles) == 1 and None not in cles and len(cle_membres[next(iter(cles))]) >= len(ps):
+            continue                                  # déjà tous reliés (couvertures maille, appliques murales…)
+        hors = [k for k in cles if k is not None and any(_ref_item(q)[:2] not in noms_ for q in cle_membres[k])]
+        if hors:
+            NON_CROISES.append((sorted(_ref_item(p) for p in ps), 'déjà relié à des articles d’autres collections'))
+            continue
+        for p in ps:
+            parent_[_racine(p)] = _racine(ps[0])
+            if key_of.get(p) is not None:
+                for q in cle_membres[key_of[p]]:
+                    parent_[_racine(q)] = _racine(ps[0])
+    comps_ = collections.defaultdict(list)
+    for p in list(parent_):
+        comps_[_racine(p)].append(p)
+    for ps in comps_.values():
+        mem = [items[p] for p in sorted(ps)]
+        # même article (même terminaison) : même taille dans toutes les collections (taille absente d'un titre, ou deux
+        # tailles dans un titre : « grand modèle 6-24 mois »)
+        taille = {m['id']: m['s'] for m in mem}
+        par_suf = collections.defaultdict(list)
+        for m in mem:
+            par_suf[_ref_item(m['id'])[2:]].append(m)
+        for ms in par_suf.values():
+            ts = {m['s'] for m in ms}
+            if len(ms) < 2 or len(ts) < 2:
+                continue
+            connues = [set(m['sizes']) for m in ms if m['sizes']]
+            commun = set.intersection(*connues) if connues else set()
+            v = next(iter(commun)) if len(commun) == 1 else (next(iter(ts - {None})) if len(ts - {None}) == 1 else None)
+            if v:
+                for m in ms:
+                    taille[m['id']] = v
+        autres = lambda m: (taille[m['id']],) + tuple(m[d] for d in _AUTRES_DIMS[1:])
+        par_coll = collections.defaultdict(list)
+        for m in mem:
+            par_coll[_ref_item(m['id'])[:2]].append(m)
+        vals_ = {}
+        for pre, ms in par_coll.items():
+            base = noms_[pre]
+            commun = set.intersection(*(set(m['skel'].split()) for m in ms))
+            for f in (lambda m: base,                                                    # la collection seule
+                      lambda m: base + (' ' + m['c'].lower() if m['c'] else ''),         # + la couleur
+                      lambda m: ' '.join([base] + [w for w in m['skel'].split() if w not in commun])):   # + le motif
+                if len({(f(m),) + autres(m) for m in ms}) == len(ms):
+                    vals_.update({m['id']: f(m) for m in ms})
+                    break
+        secondaires = {i for ids, *_ in GROUPES_SECONDAIRES for i in ids}
+        if len(vals_) < len(mem):
+            NON_CROISES.append((sorted(_ref_item(m['id']) for m in mem), 'articles d’une même collection impossibles à '
+                                'distinguer (même couleur, même taille)'))
+            continue
+        if any(m['id'] in secondaires for m in mem):
+            NON_CROISES.append((sorted(_ref_item(m['id']) for m in mem), 'couvertures : gardent le choix « Polaire / '
+                                'Maille » de leur collection (demande du 02/11/2026)'))
+            continue
+        k = ('MERGE', mem[0]['id'])
+        for m in mem:
+            m['c'], m['s'] = vals_[m['id']], taille[m['id']]
+            key_of[m['id']] = k
+        GROUP_ATTR[mem[0]['id']] = attr_
+        CROISES.append(([m['id'] for m in mem], com_))
+
 raw = collections.defaultdict(list)
 for pid, k in key_of.items():
     raw[k].append(items[pid])

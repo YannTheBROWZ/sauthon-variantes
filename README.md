@@ -26,7 +26,8 @@ Le second tag GTM ([tag/tag-gtm-pour-completer.html](tag/tag-gtm-pour-completer.
 jusqu'à 3 produits : le plan à langer assorti, les matelas (`generateur/matelas.py`, à partir des fiches lues par
 `generateur/lire_fiches_matelas.py`) et les compléments demandés par Sauthon par référence produit — draps housse,
 housses de matelas à langer, panières… (`generateur/complements_regles.py`) ou par règle (pyjamas, bodies, bonnet et
-trousseau de la même taille ; nid d'ange, couverture et spirale de la collection), assemblés par `generateur/encart.py`
+trousseau de la même taille ; nid d'ange, couverture et spirale de la collection ; trousses de toilette xxTT1 / xxTT2
+sur la cape de bain xxSB1 de la même collection), assemblés par `generateur/encart.py`
 (liste « l » du fichier publié). **Seules les règles validées par Sauthon sont publiées** (`PUBLIER` dans
 `generateur/encart.py`) : depuis le 02/11/2026, toutes les règles de matelas (matelas à langer relié dans PrestaShop,
 sinon le matelas uni Vanilla, suivi du drap housse uni Vanilla s'il reste de la place ; lits combinés ; berceaux et lits
@@ -103,3 +104,10 @@ Règles par référence (cliente, 02/11/2026) : nids d'ange xxNA1 / xxNA2 (Class
 maille réunies dans un sélecteur « Modèle », toutes collections confondues ; sur la couverture polaire xxCV1 d'une
 collection, sélecteur Polaire / Maille (`GROUPES_SECONDAIRES` : groupe affiché seulement sur la page d'un produit qui
 n'est dans aucun autre groupe, la balise prenant le premier groupe qui contient la fiche).
+Familles croisées (cliente, 03/11/2026, `FAMILLES_CROISEES`) : les mêmes articles (même fin de référence) des
+collections Babyfan, Miss Fleur de Lune, Hello, Lazare et Chao Chao (BW, XC, PP, LX, QJ ; sélecteur « Modèle ») et
+des collections Léopard et Petit Chou (RL, BO ; sélecteur « Coloris ») sont reliés, en gardant les tailles et saisons
+que les articles d'une même collection avaient déjà entre eux ; valeur = collection, + couleur ou motif quand une
+collection a plusieurs versions du même article. Exceptions (`NON_CROISES`) : articles déjà reliés à d'autres
+collections, et couvertures polaires xxCV1, qui gardent leur sélecteur Polaire / Maille. Les Unis (EC, TB, SA, PJ) et
+Petit Coeur / Petit Nuage / Petit Soleil (FJ, DX, MA) étaient déjà reliés par `COLLECTION_VARIANT`.
