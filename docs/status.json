@@ -1,13 +1,13 @@
 {
-  "genere_le": "2026-11-03T10:51:23Z",
-  "produits_flux": 1593,
-  "produits_relies": 948,
+  "genere_le": "2026-11-03T11:55:43Z",
+  "produits_flux": 1590,
+  "produits_relies": 946,
   "groupes_variantes": 265,
-  "fiches_composition": 225,
-  "packs_lus": "123/127",
+  "fiches_composition": 221,
+  "packs_lus": "122/126",
   "packs_supprimes": [],
   "pour_completer": {
-    "fiches": 110,
+    "fiches": 109,
     "plans": 28,
     "ajouts_auto": [
       {
@@ -25,31 +25,37 @@
         "source": "commode du pack"
       }
     ],
-    "retraits": [],
+    "retraits": [
+      {
+        "fiche": 3162,
+        "plan": 2799,
+        "raison": "fiche absente du flux"
+      }
+    ],
     "a_valider": []
   },
-  "encart_fiches": 539,
+  "encart_fiches": 545,
   "encart": {
-    "fiches": 539,
-    "lignes": 1076,
+    "fiches": 545,
+    "lignes": 1080,
     "roles": {
       "dr": 166,
-      "ml": 243,
+      "ml": 242,
       "so": 11,
-      "co": 270,
-      "ma": 233,
-      "pl": 110,
+      "co": 277,
+      "ma": 232,
+      "pl": 109,
       "ho": 34,
       "pa": 9
     },
     "publiees_par_regle": {
-      "complement_demande": 362,
+      "complement_demande": 369,
       "matelas_lit_junior": 11,
       "sommier": 11,
-      "matelas_lit_demande": 217,
-      "matelas_langer_accessoire": 78,
+      "matelas_lit_demande": 216,
+      "matelas_langer_accessoire": 77,
       "matelas_langer_defaut": 166,
-      "plan": 110,
+      "plan": 109,
       "matelas_langer_a_confirmer": 37,
       "matelas_lit_autre": 15,
       "matelas_langer_lit_combine": 59,
@@ -65,7 +71,7 @@
     "listes_de_la_veille": 0,
     "listes_sans_pages": 0,
     "refs_inconnues": {},
-    "empreinte": "e2333c740c78"
+    "empreinte": "bb69353466ad"
   },
   "statut": "ok",
   "erreurs": []
