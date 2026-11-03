@@ -420,8 +420,8 @@ FAMILLES_CROISEES = [
      'Collections textiles Babyfan, Miss Fleur de Lune, Hello, Lazare et Chao Chao (demande du 03/11/2026)'),
     ({'RL': 'Léopard', 'BO': 'Petit Chou'}, 'Coloris', 'Collections Léopard et Petit Chou (demande du 03/11/2026)'),
 ]
-# même article sous une autre fin de référence (cliente, 03/11/2026) : gigoteuses Lazare 0-6 mois et 6-24 mois
-ALIAS_SUFFIXE = {'LXDO5': 'DO1', 'LXDO7': 'DO3'}
+# même article sous une autre fin de référence (cliente, 03/11/2026) : gigoteuses Lazare 0-6 mois et 6-24 mois, tour de lit
+ALIAS_SUFFIXE = {'LXDO5': 'DO1', 'LXDO7': 'DO3', 'LXTL5': 'TL1'}
 CROISES = []           # (ids, commentaire) : regroupements créés (tableau de validation)
 NON_CROISES = []       # (références, raison) : articles présents dans plusieurs collections mais laissés tels quels
 _AUTRES_DIMS = ['s', 'forme', 'col', 'manches', 'saison']
