@@ -1,7 +1,7 @@
 {
-  "genere_le": "2026-11-03T13:43:21Z",
+  "genere_le": "2026-11-03T14:10:45Z",
   "produits_flux": 1590,
-  "produits_relies": 946,
+  "produits_relies": 947,
   "groupes_variantes": 264,
   "fiches_composition": 221,
   "packs_lus": "122/126",
@@ -71,7 +71,7 @@
     "listes_de_la_veille": 0,
     "listes_sans_pages": 0,
     "refs_inconnues": {},
-    "empreinte": "f0aa79f5c627"
+    "empreinte": "f5fbc48297aa"
   },
   "statut": "ok",
   "erreurs": []
