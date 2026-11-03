@@ -191,12 +191,37 @@ def housses_lit_combine(pid):
             for r in sorted(r for r in PAR_REF if re.fullmatch(coll + r'HM\d+', r))]
 
 
+# Gigoteuses (et douillettes) naissance ou 0-6 mois (demande du 03/11/2026) : pyjama 1 mois (xxPY2) et bodies 1 mois
+# (xxBD2) de la collection. Collection = 2 premiers caractères de la référence ; pour un pack sans référence de ce type
+# (GI001…), le préfixe le plus courant des articles de la même collection PrestaShop.
+def _prefixes_collection():
+    par_col = collections.defaultdict(collections.Counter)
+    for r in rows:
+        ref = (r.get('ref') or '').strip().upper()
+        if re.fullmatch(r'[A-Z0-9]{2}[A-Z]{2}\d+', ref) and r['col'].strip():
+            par_col[norm(r['col'])][ref[:2]] += 1
+    return {c: n.most_common(1)[0][0] for c, n in par_col.items()}
+
+
+PREFIXE_COLLECTION = _prefixes_collection()
+
+
+def layette_gigoteuse(pid):
+    if pid not in FEED:
+        return []
+    t, ref = title_of(FEED[pid]['t']), ref_de(pid)
+    if not (re.search(r'\b(gigoteuses?|douillettes?)\b', t) and re.search(r'\bnaissance\b|\b0\s*-\s*6\s*m', t)):
+        return []
+    p = ref[:2] if re.fullmatch(r'[A-Z0-9]{2}[A-Z]{2}\d+', ref) else PREFIXE_COLLECTION.get(norm(FEED[pid]['col']), '')
+    return [c for c in (p + 'PY2', p + 'BD2') if p and ref_id(c)]
+
+
 def demandes(pid):
     """Références demandées pour une fiche, dans l'ordre : par id (COMPLEMENTS), par référence de la fiche
     (COMPLEMENTS_PAR_REF, housses des lits combinés, layette), puis règles par motif de référence (COMPLEMENTS_MOTIFS,
     cibles absentes ignorées)."""
     out = list(COMPLEMENTS.get(pid, [])) + list(COMPLEMENTS_PAR_REF.get(ref_de(pid), [])) + housses_lit_combine(pid) + \
-        LAYETTE.get(ref_de(pid), [])
+        LAYETTE.get(ref_de(pid), []) + layette_gigoteuse(pid)
     for motif, cibles in COMPLEMENTS_MOTIFS:
         m = re.fullmatch(motif, ref_de(pid))
         if m:

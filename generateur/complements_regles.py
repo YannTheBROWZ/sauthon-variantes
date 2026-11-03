@@ -86,5 +86,10 @@ COMPLEMENTS_MOTIFS = [
     (r'(..)CV[12]', ['{p}NA1', '{p}SL1']),   # couverture : nid d'ange et spirale de la même collection
     (r'(..)SB1', ['{p}TT1', '{p}TT2']),      # cape de bain : trousses de toilette de la même collection (demande du 03/11)
     (r'(..)CF1', ['898505']),                # couffin : support bois pour couffin (demande du 03/11)
+    # jouets d'éveil de la même collection (demandes du 03/11) : balle, cube et spirale entre eux ; tapis d'éveil -> livre, cube
+    (r'(..)BA1', ['{p}CU1', '{p}SL1']),
+    (r'(..)CU1', ['{p}BA1', '{p}SL1']),
+    (r'(..)SL1', ['{p}BA1', '{p}CU1']),
+    (r'(..)TS1', ['{p}LI1', '{p}CU1']),
 ]
 

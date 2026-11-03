@@ -27,7 +27,9 @@ jusqu'à 3 produits : le plan à langer assorti, les matelas (`generateur/matela
 `generateur/lire_fiches_matelas.py`) et les compléments demandés par Sauthon par référence produit — draps housse,
 housses de matelas à langer, panières… (`generateur/complements_regles.py`) ou par règle (pyjamas, bodies, bonnet et
 trousseau de la même taille ; nid d'ange, couverture et spirale de la collection ; trousses de toilette xxTT1 / xxTT2
-sur la cape de bain xxSB1 de la même collection ; support bois 898505 sur les couffins xxCF1), assemblés par
+sur la cape de bain xxSB1 de la même collection ; support bois 898505 sur les couffins xxCF1 ; pyjama et bodies 1 mois
+xxPY2 / xxBD2 sur les gigoteuses naissance et 0-6 mois ; balle xxBA1, cube xxCU1 et spirale xxSL1 entre eux, livre
+xxLI1 et cube sur le tapis d'éveil xxTS1), assemblés par
 `generateur/encart.py`
 (liste « l » du fichier publié). **Seules les règles validées par Sauthon sont publiées** (`PUBLIER` dans
 `generateur/encart.py`) : depuis le 02/11/2026, toutes les règles de matelas (matelas à langer relié dans PrestaShop,
@@ -110,5 +112,6 @@ collections Babyfan, Miss Fleur de Lune, Hello, Lazare et Chao Chao (BW, XC, PP,
 des collections Léopard et Petit Chou (RL, BO ; sélecteur « Coloris ») sont reliés, en gardant les tailles et saisons
 que les articles d'une même collection avaient déjà entre eux ; valeur = collection, + couleur ou motif quand une
 collection a plusieurs versions du même article. Exceptions (`NON_CROISES`) : articles déjà reliés à d'autres
-collections, et couvertures polaires xxCV1, qui gardent leur sélecteur Polaire / Maille. Les Unis (EC, TB, SA, PJ) et
+collections, et couvertures polaires xxCV1, qui gardent leur sélecteur Polaire / Maille. Même article sous une autre
+fin de référence : `ALIAS_SUFFIXE` (gigoteuses Lazare LXDO5 = DO1, LXDO7 = DO3). Les Unis (EC, TB, SA, PJ) et
 Petit Coeur / Petit Nuage / Petit Soleil (FJ, DX, MA) étaient déjà reliés par `COLLECTION_VARIANT`.

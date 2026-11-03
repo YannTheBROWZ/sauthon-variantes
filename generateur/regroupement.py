@@ -420,6 +420,8 @@ FAMILLES_CROISEES = [
      'Collections textiles Babyfan, Miss Fleur de Lune, Hello, Lazare et Chao Chao (demande du 03/11/2026)'),
     ({'RL': 'Léopard', 'BO': 'Petit Chou'}, 'Coloris', 'Collections Léopard et Petit Chou (demande du 03/11/2026)'),
 ]
+# même article sous une autre fin de référence (cliente, 03/11/2026) : gigoteuses Lazare 0-6 mois et 6-24 mois
+ALIAS_SUFFIXE = {'LXDO5': 'DO1', 'LXDO7': 'DO3'}
 CROISES = []           # (ids, commentaire) : regroupements créés (tableau de validation)
 NON_CROISES = []       # (références, raison) : articles présents dans plusieurs collections mais laissés tels quels
 _AUTRES_DIMS = ['s', 'forme', 'col', 'manches', 'saison']
@@ -428,6 +430,10 @@ _AUTRES_DIMS = ['s', 'forme', 'col', 'manches', 'saison']
 def _ref_item(pid):
     ref = (items[pid].get('ref') or '').strip().upper()
     return ref if re.fullmatch(r'[A-Z0-9]{2}[A-Z]{2}\d+', ref) else ''
+
+
+def _suffixe(pid):
+    return ALIAS_SUFFIXE.get(_ref_item(pid), _ref_item(pid)[2:])
 
 
 for noms_, attr_, com_ in FAMILLES_CROISEES:
@@ -445,7 +451,7 @@ for noms_, attr_, com_ in FAMILLES_CROISEES:
 
     par_suffixe = collections.defaultdict(list)
     for p in pids_:
-        par_suffixe[_ref_item(p)[2:]].append(p)
+        par_suffixe[_suffixe(p)].append(p)
     for suf, ps in sorted(par_suffixe.items()):
         if len({_ref_item(p)[:2] for p in ps}) < 2:
             continue
@@ -471,15 +477,15 @@ for noms_, attr_, com_ in FAMILLES_CROISEES:
         taille = {m['id']: m['s'] for m in mem}
         par_suf = collections.defaultdict(list)
         for m in mem:
-            par_suf[_ref_item(m['id'])[2:]].append(m)
+            par_suf[_suffixe(m['id'])].append(m)
         for ms in par_suf.values():
             ts = {m['s'] for m in ms}
             if len(ms) < 2 or len(ts) < 2:
                 continue
-            connues = [set(m['sizes']) for m in ms if m['sizes']]
-            commun = set.intersection(*connues) if connues else set()
-            v = next(iter(commun)) if len(commun) == 1 else (next(iter(ts - {None})) if len(ts - {None}) == 1 else None)
-            if v:
+            # la taille citée par le plus d'articles ; à égalité, une taille en âge (« 6-24 mois ») plutôt que « grand modèle »
+            cand = collections.Counter(v for m in ms for v in set(m['sizes'] or ([m['s']] if m['s'] else [])))
+            if cand:
+                v = max(cand.items(), key=lambda kv: (kv[1], bool(re.search(r'mois|ans|naissance', norm(kv[0])))))[0]
                 for m in ms:
                     taille[m['id']] = v
         autres = lambda m: (taille[m['id']],) + tuple(m[d] for d in _AUTRES_DIMS[1:])
