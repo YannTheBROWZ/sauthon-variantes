@@ -300,9 +300,13 @@ def candidates(pid, proposition=False):
         out.append((int(plan), 'pl', 'plan', 'plan'))
     elif proposition and pid in A_VALIDER:
         out.append((A_VALIDER[pid], 'pl', 'proposition', 'plan_propose'))
+    # matelas à langer demandé par la cliente pour la fiche (04/11 : DU111 -> XEML1) : il remplace l'uni proposé par défaut
+    ma_demande = any(o == 'demandé' and c in items and role_titre(c) == 'ma' for c, o in complements_de(pid))
     for l in MAT.get(str(pid), {}).get('lignes', []):
         if l['role'] == 'matelas_langer' and ref_de(pid) in HOUSSES_LIT_COMBINE:
             continue          # matelas à langer fourni avec ce lit combiné (réponse du 02/11 : « sauf EW101 et BJ101 »)
+        if l['role'] == 'matelas_langer' and l.get('defaut') and ma_demande:
+            continue
         out.append((l['id'], ROLE_MATELAS[l['role']], 'matelas', categorie(pid, l['id'], 'matelas', l)))
     for cid, origine in complements_de(pid):
         if cid in items:

@@ -73,6 +73,7 @@ COMPLEMENTS_PAR_REF = {
     # protections de barreaux Terracotta (photo d'ambiance) et douillette Babyfan
     **{r: ['BWTL1', 'BWDO1'] for r in ('2H035', '2H038', 'AF031')},
     'UI101': ['TBPB1', 'BWDO1'],
+    'DU111': ['XEML1', 'XEPB1'],   # duo lit chambre + armoire UP chêne silex : matelas à langer et protections Baby Sailor (04/11)
 }
 # Lits combinés dont le matelas à langer est fourni (réponse du 02/11 : matelas à langer « sauf EW101 et BJ101 », « ajouter
 # housse de matelas à langer EC, WV, SA, TB ») : pas de matelas à langer, mais les housses de matelas à langer (références
