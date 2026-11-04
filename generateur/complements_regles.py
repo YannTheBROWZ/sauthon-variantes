@@ -74,6 +74,7 @@ COMPLEMENTS_PAR_REF = {
     **{r: ['BWTL1', 'BWDO1'] for r in ('2H035', '2H038', 'AF031')},
     'UI101': ['TBPB1', 'BWDO1'],
     'DU111': ['XEML1', 'XEPB1'],   # duo lit chambre + armoire UP chêne silex : matelas à langer et protections Baby Sailor (04/11)
+    'LXTL5': ['LXED5', 'LXED6', 'LXDO5'],   # tour de lit Lazare : édredons 120x60 / 140x70 et gigoteuse 0-6 mois (04/11)
 }
 # Lits combinés dont le matelas à langer est fourni (réponse du 02/11 : matelas à langer « sauf EW101 et BJ101 », « ajouter
 # housse de matelas à langer EC, WV, SA, TB ») : pas de matelas à langer, mais les housses de matelas à langer (références
@@ -97,5 +98,9 @@ COMPLEMENTS_MOTIFS = [
     (r'(..)SL1', ['{p}BA1', '{p}CU1']),
     (r'(..)TS1', ['{p}LI1', '{p}CU1']),
     (r'(..)DO3', ['{p}HC1', '{p}DD1']),      # gigoteuse ouatinée 6-24 mois : housse de couette et peluche (demande du 03/11)
+    # tours de lit (demande du 04/11) : couvre-lit et draps housse de la collection ; Babyfan, Miss Fleur de Lune et Chao Chao :
+    # édredons 120x60 / 140x70 et gigoteuse 0-6 mois (Lazare LXTL5 : COMPLEMENTS_PAR_REF)
+    (r'(?!BW|XC|QJ)(..)TL[12]', ['{p}CM1', '{p}DR1']),
+    (r'(BW|XC|QJ)TL[12]', ['{p}ED1', '{p}ED2', '{p}DO1']),
 ]
 
