@@ -47,6 +47,7 @@ PUBLIER = {
     'housse': True,                      # housse de matelas à langer, sur la fiche du matelas (demande du 28/10)
     'complement_demande': True,          # références demandées par la cliente pour la fiche (complements_regles.py)
     'complement_herite': True,           # duo / trio : compléments demandés sur ses pièces (décision du 29/10 : comme les matelas)
+    'tour_de_lit': True,                 # lits : tour de lit associé dans PrestaShop, après le matelas et le drap (demande du 04/11)
 }
 MATELAS_LIT_DEMANDES = {2274, 11}         # Confort Baby 120x60 et 140x70
 MATELAS_LIT_JUNIOR = {9, 8}               # Montana 90x190 et 90x200
@@ -269,6 +270,8 @@ def categorie(pid, cid, origine, ligne_matelas=None):
         return 'plan_propose'
     if origine == 'demandé':
         return 'complement_demande'
+    if origine == 'associé':
+        return 'tour_de_lit'
     if origine != 'matelas':
         return 'complement_herite'
     l, tm = ligne_matelas, MAT.get(str(pid), {}).get('type')
@@ -304,7 +307,41 @@ def candidates(pid, proposition=False):
     for cid, origine in complements_de(pid):
         if cid in items:
             out.append((cid, role_titre(cid), origine, categorie(pid, cid, origine)))
-    return [c for c in out if c[0] != pid]
+    out = [c for c in out if c[0] != pid]
+    return ordre_lit(pid, out) if est_lit(pid, out) else out
+
+
+# Lits (demande du 04/11/2026) : « en plus du matelas et du drap housse, le tour de lit associé dans PrestaShop ». Ordre :
+# matelas (et matelas à langer d'un lit combiné), 1er drap housse, tour de lit (celui demandé par la cliente, sinon le 1er
+# tour de lit relié à la fiche dans PrestaShop, « Produits associés »), puis les autres compléments.
+def est_tour_de_lit(cid):
+    return cid in FEED and bool(re.search(r'\btour de lit\b', title_of(FEED[cid]['t'])))
+
+
+def est_lit(pid, out):
+    return any(c[1] == 'ml' for c in out) and items.get(pid, {}).get('comp') not in ('duo', 'duo_armoire', 'trio', 'pack') \
+        and MAT.get(str(pid), {}).get('type') != 'berceau'
+
+
+def tour_de_lit_associe(pid):
+    for s in FICHES.get(str(pid), {}).get('sections', []):
+        if s.get('type') == 'product-accessories':
+            for x in s.get('ids', []):
+                if x in items and est_tour_de_lit(x):
+                    return x
+    return None
+
+
+def ordre_lit(pid, out):
+    base = [c for c in out if c[2] in ('plan', 'proposition', 'matelas')]
+    reste = [c for c in out if c not in base]
+    tl = [c for c in reste if est_tour_de_lit(c[0])][:1]
+    if not tl:
+        x = tour_de_lit_associe(pid)
+        if x and x != pid and x not in {c[0] for c in out}:
+            tl = [(x, role_titre(x), 'associé', 'tour_de_lit')]
+    dr = [c for c in reste if c[1] == 'dr' and c not in tl][:1]
+    return base + dr + tl + [c for c in reste if c not in tl and c not in dr]
 
 
 def defaut_langer(pid, cid):
@@ -329,7 +366,8 @@ def lignes(pid, proposition=False):
             a_valider.append(c); vus.add(c[0])
     pub, coupees = pub[:MAX_LIGNES], pub[MAX_LIGNES:]
     k = next((i for i, c in enumerate(pub) if c[2] == 'matelas' and c[1] == 'ma' and defaut_langer(pid, c[0])), None)
-    if k is not None and len(pub) < MAX_LIGNES:
+    avec_lit = any(c[1] == 'ml' for c in pub + coupees) or items.get(pid, {}).get('comp') in ('lit', 'duo', 'duo_armoire', 'trio')
+    if k is not None and len(pub) < MAX_LIGNES and avec_lit:     # drap seulement s'il y a un lit (demande du 04/11)
         drap = ref_id(DRAP_UNI.get(ref_de(pub[k][0]), ''))
         if drap in items and drap not in vus and drap != pid:
             pub = pub[:k + 1] + [(drap, 'dr', 'uni', pub[k][3])] + pub[k + 1:]

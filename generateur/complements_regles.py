@@ -69,6 +69,10 @@ COMPLEMENTS_PAR_REF = {
     '68437': ['JZHM2', 'KHHM2', 'QNHM2', 'VGHM2', 'XYHM2'],   # Meuble à langer blanc pieds bois Galopin
     # réponse du 02/11 au soir : meubles à langer Bambin (matelas fourni) -> housses rectangulaires 76x55 JZHM3 et KHHM3
     **{r: ['JZHM3', 'KHHM3'] for r in ('19431', '19434', '19435', '19436')},
+    # demandes du 04/11 : lits FIRST 2H035 / 2H038 et lit Azur AF031 -> tour de lit et douillette Babyfan ; lit UP UI101 ->
+    # protections de barreaux Terracotta (photo d'ambiance) et douillette Babyfan
+    **{r: ['BWTL1', 'BWDO1'] for r in ('2H035', '2H038', 'AF031')},
+    'UI101': ['TBPB1', 'BWDO1'],
 }
 # Lits combinés dont le matelas à langer est fourni (réponse du 02/11 : matelas à langer « sauf EW101 et BJ101 », « ajouter
 # housse de matelas à langer EC, WV, SA, TB ») : pas de matelas à langer, mais les housses de matelas à langer (références

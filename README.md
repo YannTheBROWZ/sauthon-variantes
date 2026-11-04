@@ -30,11 +30,13 @@ trousseau de la même taille ; nid d'ange, couverture et spirale de la collectio
 sur la cape de bain xxSB1 de la même collection ; support bois 898505 sur les couffins xxCF1 ; pyjama et bodies 1 mois
 xxPY2 / xxBD2 sur les gigoteuses naissance et 0-6 mois ; balle xxBA1, cube xxCU1 et spirale xxSL1 entre eux, livre
 xxLI1 et cube sur le tapis d'éveil xxTS1 ; housse de couette xxHC1 et peluche xxDD1 sur la gigoteuse ouatinée
-6-24 mois xxDO3), assemblés par
+6-24 mois xxDO3 ; sur un lit, le tour de lit relié dans PrestaShop après le matelas et le 1er drap, `ordre_lit`),
+assemblés par
 `generateur/encart.py`
 (liste « l » du fichier publié). **Seules les règles validées par Sauthon sont publiées** (`PUBLIER` dans
 `generateur/encart.py`) : depuis le 02/11/2026, toutes les règles de matelas (matelas à langer relié dans PrestaShop,
-sinon le matelas uni Vanilla, suivi du drap housse uni Vanilla s'il reste de la place ; lits combinés ; berceaux et lits
+sinon le matelas uni Vanilla, suivi du drap housse uni Vanilla s'il reste de la place et s'il y a un lit (04/11) ; lits
+combinés ; berceaux et lits
 100x50) sauf le matelas des fiches dont le titre
 et la description ne donnent pas la même taille, qui reste « à valider » dans le tableau de validation. Pour publier une
 règle, passer sa valeur à `True`. Une fiche illisible pendant la lecture du site garde sa liste de la veille.
