@@ -1,15 +1,13 @@
 {
-  "genere_le": "2026-11-05T19:20:14Z",
-  "t": 1793906414,
-  "statut": "avertissement",
+  "genere_le": "2026-11-05T19:39:02Z",
+  "t": 1793907542,
+  "statut": "ok",
   "langues": {
     "es": {
-      "statut": "avertissement",
+      "statut": "ok",
       "publie": true,
       "erreurs": [],
-      "avertissements": [
-        "23 produits retirés de cette langue (1re génération de cette langue) (absents, sans nom, titre provisoire ou adresse refusée, détail dans « produits_retires ») : ['4115', '4116', '4117', '4123', '4124', '4133', '4138', '4139', '4140', '4141']."
-      ],
+      "avertissements": [],
       "produits_flux": 1664,
       "produits_relies": 919,
       "groupes_variantes": 264,
@@ -149,15 +147,13 @@
         "sans_traduction": [],
         "collisions": []
       },
-      "version_en_ligne": "2026-11-05T19:20:14Z"
+      "version_en_ligne": "2026-11-05T19:39:02Z"
     },
     "it": {
-      "statut": "avertissement",
+      "statut": "ok",
       "publie": true,
       "erreurs": [],
-      "avertissements": [
-        "25 produits retirés de cette langue (1re génération de cette langue) (absents, sans nom, titre provisoire ou adresse refusée, détail dans « produits_retires ») : ['3039', '3442', '4115', '4116', '4117', '4123', '4124', '4133', '4138', '4139']."
-      ],
+      "avertissements": [],
       "produits_flux": 1664,
       "produits_relies": 917,
       "groupes_variantes": 262,
@@ -306,7 +302,7 @@
         "sans_traduction": [],
         "collisions": []
       },
-      "version_en_ligne": "2026-11-05T19:20:14Z"
+      "version_en_ligne": "2026-11-05T19:39:02Z"
     }
   }
 }
