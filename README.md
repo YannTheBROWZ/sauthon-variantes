@@ -69,6 +69,44 @@ d'une nuit à l'autre, **rien n'est publié** : la version de la veille reste en
 d'échec. Une baisse importante mais légitime du catalogue se valide en relançant la tâche après avoir ajusté
 `SEUIL_BAISSE` dans `generateur/verifier.py`.
 
+## Versions espagnole et italienne
+
+Les sélecteurs de variantes ont aussi leurs données en espagnol et en italien, `docs/variantes-es.json` et
+`docs/variantes-it.json` (même format que `variantes.json`, plus `sw` : sélecteurs affichés en vignettes photo, et
+`lang` : « es » ou « it », vérifié par la balise multilingue). À chaque génération :
+
+- `generateur/flux_langues.py` télécharge les flux espagnol (`id=11`) et italien (`id=10`) juste après le flux
+  français ;
+- une fois la version française publiée (`verifier.py`), `generateur/variantes_langues.py` reprend les groupes et
+  compositions français, par identifiant de produit, avec l'adresse de chaque produit dans la langue (lien du flux) et
+  les textes traduits par `generateur/traductions.py`. Rien n'est regroupé à partir des titres espagnols ou italiens
+  (traductions automatiques) ;
+- un produit absent du flux de la langue, sans nom, au titre provisoire (« new », « copia de… » : pas encore traduit
+  dans PrestaShop), présent deux fois avec deux adresses ou dont l'adresse serait refusée par la balise est retiré de
+  cette langue (le 05/11/2026 : 23 produits en espagnol, les mêmes plus 3039 et 3442, sans nom, en italien) ;
+- un texte sans traduction retire de cette langue les produits (ou choix de composition) qui l'affichent, tout le groupe
+  pour un nom de sélecteur, jusqu'à ce qu'il soit ajouté dans `TABLE`, `SELECTEURS` ou `NOMS_PROPRES` de
+  `generateur/traductions.py` ; deux textes traduits de la même façon dans un groupe ou une composition : ce groupe ou
+  cette composition n'est pas publié dans la langue.
+
+Les traductions sont **provisoires, à faire valider par Sauthon** : `python traductions.py`, lancé dans `generateur/`
+après une génération, liste chaque texte publié et sa traduction. Le français ne dépend jamais de ces étapes
+(`continue-on-error` ; elles n'écrivent aucun fichier français). Une langue dont le flux manque ou dont un contrôle
+échoue garde son fichier de la veille, et la tâche envoie un e-mail d'échec (dernière étape). Le contrôle de couverture
+(90 % du français) ne compte que ce que le flux de la langue fait perdre : ni les textes sans traduction, ni les
+produits au titre provisoire, sauf s'ils dépassent 25 % des produits (flux cassé). Même e-mail, fichier publié, la
+première fois qu'un texte est sans traduction, qu'une traduction est en double ou qu'un produit est retiré, par rapport à
+la dernière publication de la langue : pas de nouvel e-mail les nuits suivantes pour la même chose (la première
+génération signale tout). Détail dans `docs/status-langues.json`, qui liste aussi, pour information, les produits de
+l'encart absents, sans nom ou au titre provisoire dans chaque langue, et les produits publiés dont le titre de la langue
+est encore le titre français (`titres_identiques_au_francais`). L'encart « Pour compléter » n'a pas de fichier par
+langue : sa balise lit `pour-completer.json` dans toutes les langues (identifiants et rôles seulement ; nom, prix et
+adresse sont lus en direct sur la fiche de la langue).
+
+Avant de publier les balises multilingues : le serveur de Sauthon doit servir et copier `variantes-es.json` et
+`variantes-it.json` comme les deux autres fichiers (aujourd'hui : 403) ; passer alors `SURV_LANGUES` à `'es it'` dans
+[surveiller.yml](.github/workflows/surveiller.yml). La surveillance vérifie aussi la langue de chaque fichier (`lang`).
+
 ## Copie sur le serveur de Sauthon
 
 Les visiteurs ne contactent jamais GitHub : les tags lisent la copie de `docs.sauthon.com/CRO/`, que le serveur de

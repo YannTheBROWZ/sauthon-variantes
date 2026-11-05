@@ -1,6 +1,7 @@
 """Surveille la copie des données servie par le serveur de Sauthon (docs.sauthon.com/CRO/), que lisent les tags GTM.
 
-La tâche échoue, et GitHub envoie un e-mail d'échec, si l'un des deux fichiers :
+La tâche échoue, et GitHub envoie un e-mail d'échec, si l'un des fichiers (variantes, encart, et versions espagnole et
+italienne des variantes pour les langues listées dans SURV_LANGUES) :
 - ne répond pas en 200 avec un JSON lisible et complet (date de génération « t » comprise) ;
 - n'autorise plus www.sauthon.com à le lire : en-tête CORS absent, faux ou en double (les tags n'affichent plus rien) ;
 - dépasse la taille acceptée par les tags ;
@@ -13,7 +14,7 @@ ou si le certificat HTTPS de docs.sauthon.com expire dans moins de 15 jours.
 Signale aussi, sans échouer : retard de copie, lenteur, compression absente, cache désactivé, type de contenu inattendu.
 Les fichiers sont lus exactement comme les tags les lisent (même adresse, en-tête Origin).
 """
-import datetime, hashlib, json, math, os, socket, ssl, sys, time, urllib.error, urllib.parse, urllib.request
+import datetime, hashlib, json, math, os, re, socket, ssl, sys, time, urllib.error, urllib.parse, urllib.request
 
 SERVEUR = os.environ.get('SURV_SERVEUR', 'https://docs.sauthon.com/CRO/')
 SOURCE = os.environ.get('SURV_SOURCE', 'https://yannthebrowz.github.io/sauthon-variantes/')
@@ -23,9 +24,21 @@ ORIGINE = 'https://www.sauthon.com'
 # fichier : (clés attendues, taille maximale acceptée par les tags, coupure des tags en jours)
 FICHIERS = {'variantes.json': ({'c', 'v', 'l', 'p', 'g', 'x', 'xl'}, 300000, 7),
             'pour-completer.json': ({'map', 'plans'}, 50000, 14)}
+# versions espagnole et italienne des variantes (generateur/variantes_langues.py), mêmes règles que variantes.json :
+# surveillées pour les langues de SURV_LANGUES (surveiller.yml), dès que docs.sauthon.com les sert
+# (« es it », « es,it » ; une valeur illisible fait échouer la surveillance : jamais de langue oubliée sans le savoir)
+LANGUES_ILLISIBLES = []
+for langue_ in re.split(r'[\s,;]+', os.environ.get('SURV_LANGUES', '').strip().lower()):
+    if re.fullmatch(r'[a-z]{2}', langue_) and langue_ != 'fr':
+        FICHIERS[f'variantes-{langue_}.json'] = FICHIERS['variantes.json']
+    elif langue_ and langue_ != 'fr':                   # « fr » : variantes.json, toujours surveillé
+        LANGUES_ILLISIBLES.append(langue_)
 AGE_MAX_H_AUTO, MARGE_COUPURE_J, CERT_MIN_JOURS, LENT_S = 36, 2, 15, 2.5
 
 echecs, alertes, infos = [], [], []
+if LANGUES_ILLISIBLES:
+    echecs.append(f'SURV_LANGUES (surveiller.yml) : {LANGUES_ILLISIBLES} illisible ; attendu des codes de langue, '
+                  f'par exemple « es it ».')
 maintenant = time.time()
 
 
@@ -71,6 +84,12 @@ def contenu(nom, corps):
     t = d.get('t')
     if isinstance(t, bool) or not isinstance(t, (int, float)) or not math.isfinite(t):
         return None, 'date de génération « t » absente ou invalide (les tags ne limiteraient plus son âge)'
+    # fichier d'une autre langue copié sous ce nom (synchronisation) : variantes-es.json porte « lang » « es », le
+    # français n'en porte pas ; la balise des variantes refuse un fichier d'une autre langue
+    m = re.fullmatch(r'variantes-([a-z]{2})\.json', nom)
+    if nom.startswith('variantes') and d.get('lang') not in ((m.group(1),) if m else (None, 'fr')):
+        return None, (f'langue du fichier « lang » = {d.get("lang")!r}, attendu {m.group(1)!r}' if m else
+                      f'langue du fichier « lang » = {d.get("lang")!r} : fichier d\'une autre langue sous le nom français')
     return d, None
 
 

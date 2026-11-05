@@ -25,7 +25,8 @@ concurrency:
 jobs:
   regenerer:
     runs-on: ubuntu-latest
-    timeout-minutes: 45         # flux.py peut prendre jusqu'à ~25 min (nouveaux essais) ; une génération normale ~2 min
+    timeout-minutes: 55         # flux.py peut prendre jusqu'à ~25 min (nouveaux essais), les flux ES / IT 10 min au plus ;
+                                # une génération normale ~2 min
     environment:
       name: github-pages
       url: ${{ steps.deploiement.outputs.page_url }}
@@ -44,6 +45,15 @@ jobs:
           python flux.py
           python packs.py
 
+      # Versions espagnole et italienne (variantes-es.json, variantes-it.json) : une panne n'arrête jamais la génération
+      # française (continue-on-error) ; la langue en panne garde sa version de la veille, e-mail par la dernière étape.
+      - name: Télécharger les flux espagnol et italien
+        id: flux_langues
+        continue-on-error: true
+        timeout-minutes: 10
+        working-directory: generateur
+        run: python flux_langues.py
+
       - name: Regrouper les variantes, calculer « Pour compléter » (plan, matelas, compléments) et contrôler le résultat
         working-directory: generateur
         run: |
@@ -54,17 +64,34 @@ jobs:
           python encart.py
           python verifier.py
 
+      # Construit à partir de docs/variantes.json que verifier.py vient de publier (jamais l'inverse) : mêmes groupes et
+      # compositions, adresses de chaque langue, libellés traduits (generateur/traductions.py).
+      - name: Versions espagnole et italienne des variantes
+        id: langues
+        continue-on-error: true
+        timeout-minutes: 5
+        working-directory: generateur
+        run: python variantes_langues.py
+
       - name: Archiver les données dans le dépôt
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # repart de la dernière version de main (relance, exécution en file d'attente…) :
           # seul ce robot écrit dans docs/variantes.json, docs/pour-completer.json et docs/status.json
+          # (et dans les fichiers des langues ci-dessous)
           cp docs/variantes.json docs/pour-completer.json docs/status.json "$RUNNER_TEMP"/
+          # versions espagnole et italienne : seulement les fichiers présents (langue en panne : version de la veille)
+          LANGUES="variantes-es.json variantes-it.json status-langues.json"
+          mkdir -p "$RUNNER_TEMP"/langues
+          for f in $LANGUES; do if [ -f "docs/$f" ]; then cp "docs/$f" "$RUNNER_TEMP"/langues/; fi; done
           git fetch --depth=1 origin main
           git reset --hard origin/main
           cp "$RUNNER_TEMP"/variantes.json "$RUNNER_TEMP"/pour-completer.json "$RUNNER_TEMP"/status.json docs/
           git add docs/variantes.json docs/pour-completer.json docs/status.json
+          for f in $LANGUES; do
+            if [ -f "$RUNNER_TEMP/langues/$f" ]; then cp "$RUNNER_TEMP/langues/$f" docs/ && git add "docs/$f"; fi
+          done
           if git diff --cached --quiet; then
             echo "Aucun changement"
           else
@@ -92,4 +119,23 @@ jobs:
               sys.exit(f'Lecture du site dégradée : {len(e.get(\"fiches_illisibles\", []))} fiches illisibles, '
                        f'{e.get(\"pages_vides\")} pages vides ; listes « Pour compléter » de la veille gardées.')
           print('Lecture du site normale.')
+          "
+
+      # Version française publiée ; versions espagnole ou italienne en panne (flux, contrôles), ou nouveautés à signaler
+      # (texte sans traduction, traduction en double, produit retiré depuis la dernière publication de la langue) :
+      # la tâche échoue ici pour que GitHub envoie un e-mail (rien n'est annulé ; détail dans docs/status-langues.json).
+      - name: Signaler un problème des versions espagnole et italienne
+        if: ${{ !cancelled() && steps.langues.outcome != 'skipped' && (steps.flux_langues.outcome == 'failure' || steps.langues.outcome == 'failure') }}
+        run: |
+          python3 -c "
+          import json, os, sys
+          s = json.load(open('docs/status-langues.json')) if os.path.exists('docs/status-langues.json') else {}
+          if s.get('t') != json.load(open('docs/variantes.json')).get('t'):
+              sys.exit('variantes_langues.py s’est arrêté avant d’écrire son état (voir le journal de l’étape « Versions '
+                       'espagnole et italienne des variantes ») : versions de la veille gardées.')
+          for L, v in s['langues'].items():
+              print(L, ':', v.get('statut'), '/', 'publiée' if v.get('publie') else 'version en ligne : ' + str(v.get('version_en_ligne')))
+              for e in v.get('erreurs', []) + v.get('avertissements', []):
+                  print(f'::error::{L} : {e}')
+          sys.exit('Versions espagnole et italienne à vérifier (le français est publié normalement).')
           "

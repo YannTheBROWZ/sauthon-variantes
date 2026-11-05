@@ -22,6 +22,9 @@ jobs:
       # approche la coupure des tags (5 jours). Passer à « 1 » dès que sa synchronisation horaire tourne :
       # alerte si une génération GitHub n'est pas copiée sous 3 h, ou si la copie a plus de 36 h.
       SURV_SYNCHRO_AUTO: '0'
+      # Versions espagnole et italienne des variantes : '' tant que docs.sauthon.com ne sert pas variantes-es.json et
+      # variantes-it.json (403 au 05/11/2026) ; « es it » dès qu'il les sert et que la balise multilingue est publiée.
+      SURV_LANGUES: ''
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
