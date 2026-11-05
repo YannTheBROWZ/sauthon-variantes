@@ -45,7 +45,9 @@ SELECTEURS = [
     ('Col', 'Cuello', 'Colletto'),
     ('Manches', 'Manga', 'Maniche'),                    # es : « manga larga / corta »
     ('Saison', 'Temporada', 'Stagione'),
-    ('Taille du lit', 'Medidas de la cama', 'Misura del letto'),   # « medidas » : mot des mesures en cm
+    ('Taille du lit', 'Medidas de la cama', 'Misura del letto'),   # « medidas » : mot des mesures en cm ; lits Nova 90x190…
+    ('Taille du lit@bebe', 'Medidas de la cuna', 'Misura del lettino'),   # lits bébé et packs (120x60, 140x70 cm) : comme les
+                                                                         # compositions « cuna » / « lettino » (libelle_selecteur)
     # « Taille » selon les valeurs du groupe (libelle_selecteur) : âges (vêtements), mesures en cm (matelas, édredons),
     # autres (petit / grand modèle)
     ('Taille@age', 'Talla', 'Taglia'),
@@ -145,15 +147,16 @@ TABLE = [
     ('Boutons cœur rose', 'Pomos de corazón rosa', 'Pomelli a cuore rosa'),
     ('Boutons étoile gris', 'Pomos de estrella grises', 'Pomelli a stella grigi'),
     # compositions (COMP_LABEL, PIECE_LABEL_OVERRIDE de regroupement.py ; gammes Paloma « Duo M évolutif » : traduire())
-    # es « cama » : mot des titres ES de ces packs (« Cama dúo 120x60 + cómoda… », « Cama trío… ») et des lits combinés
-    ('Lit seul', 'Solo cama', 'Solo lettino'),
+    # es « cuna » : le lit bébé en Espagne (menu ES « Cunas », titres « Cuna… » des lits seuls ; fiches des lits combinés et
+    # lits chambre : « cuna combinada », « cuna de 60x120 cm »), comme « Medidas de la cuna » (Taille du lit@bebe).
+    ('Lit seul', 'Solo cuna', 'Solo lettino'),
     ('Commode seule', 'Solo cómoda', 'Solo cassettiera'),
     ('Armoire seule', 'Solo armario', 'Solo armadio'),
     ('Meuble à langer seul', 'Solo mueble cambiador', 'Solo mobile fasciatoio'),
     ('Commode + plan à langer', 'Cómoda + cambiador', 'Cassettiera + fasciatoio'),
-    ('Duo lit + commode', 'Dúo cama + cómoda', 'Duo lettino + cassettiera'),
-    ('Duo lit + armoire', 'Dúo cama + armario', 'Duo lettino + armadio'),
-    ('Trio lit + commode + armoire', 'Trío cama + cómoda + armario', 'Trio lettino + cassettiera + armadio'),
+    ('Duo lit + commode', 'Dúo cuna + cómoda', 'Duo lettino + cassettiera'),
+    ('Duo lit + armoire', 'Dúo cuna + armario', 'Duo lettino + armadio'),
+    ('Trio lit + commode + armoire', 'Trío cuna + cómoda + armario', 'Trio lettino + cassettiera + armadio'),
     ('Duo', 'Dúo', 'Duo'),
     ('Trio', 'Trío', 'Trio'),
     ('évolutif', 'convertible', 'trasformabile'),
@@ -165,6 +168,7 @@ ANS = {'es': ('año', 'años'), 'it': ('anno', 'anni')}
 ET = {'es': 'y', 'it': 'e'}
 RE_AGE = re.compile(r'\d+(?:-\d+)? (?:mois|ans)|Naissance')     # une taille en âge (vêtements)
 RE_CM = re.compile(r'\d+x\d+(?: et \d+x\d+)?(?: cm)?')            # une mesure (matelas, édredons…)
+RE_LIT_BEBE = re.compile(r'(?:120x60|140x70|60x120|70x140|100x50|50x100)(?: cm)?')   # « Taille du lit » d'un lit bébé
 
 
 def _par_langue(table):
@@ -228,8 +232,11 @@ def traduire(s, L):
 
 
 def libelle_selecteur(fr, valeurs_fr, L):
-    """Nom d'un sélecteur en langue L, ou None. « Taille » dépend des valeurs françaises affichées (valeurs_fr)."""
+    """Nom d'un sélecteur en langue L, ou None. « Taille » et « Taille du lit » dépendent des valeurs françaises affichées
+    (valeurs_fr)."""
     N = NOMS_SELECTEURS[L]
+    if fr == 'Taille du lit' and valeurs_fr and all(RE_LIT_BEBE.fullmatch(p) for v in valeurs_fr for p in v.split(' / ')):
+        return N['Taille du lit@bebe']
     if fr == 'Taille' and valeurs_fr:
         parts = [p for v in valeurs_fr for p in v.split(' / ')]
         if all(RE_AGE.fullmatch(p) for p in parts):
