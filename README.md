@@ -58,6 +58,8 @@ simplement supprimée, elle serait republiée la nuit suivante par l'ajout autom
 Les ajouts et retraits automatiques de la nuit sont listés dans `status.json` (rubrique `pour_completer`).
 Le tag retire aussi en direct un produit que le titre de la fiche annonce offert ou inclus (« + plan à langer offert »,
 « + matelas offert », « + 2 draps offerts »…).
+Quand la balise d'habillage des photos annonce une offre sur la fiche (`window.__croOffre`, événement `cro:offre`),
+la ligne du produit offert reste affichée, avec « Inclus » à la place du bouton + et sans prix (`CONFIG.inclus`).
 
 ## Garde-fous
 

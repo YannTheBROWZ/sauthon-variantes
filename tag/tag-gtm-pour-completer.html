@@ -5,6 +5,8 @@
   chaque nuit (dépôt github.com/YannTheBROWZ/sauthon-variantes : generateur/pour_completer_regles.py, matelas.py,
   complements_regles.py, encart.py). Prix, stock et ajout au panier sont lus en direct sur PrestaShop.
   Déclencheur conseillé : DOM prêt, sur les fiches produit.
+  Offre en cours annoncée par la balise d'habillage (window.__croOffre, événement « cro:offre ») : la ligne du rôle
+  offert reste affichée, avec « Inclus » à la place du bouton + (voir CONFIG.inclus).
 -->
 <style>
 .spc{margin:20px 0 4px;color:#1f1f1f;font-family:inherit}
@@ -26,6 +28,8 @@
 .spc__add:focus-visible{outline:2px solid #a77564;outline-offset:2px}
 .spc__add[aria-disabled="true"]{cursor:default}
 .spc__add svg{width:22px;height:22px;display:block}
+.spc__inclus{flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;height:34px;padding:0 13px 0 10px;border-radius:9999px;background:#f6f1ee;color:#8a5c4c;font-size:14px;line-height:1;font-weight:600;white-space:nowrap}
+.spc__inclus svg{width:16px;height:16px;flex:0 0 16px;display:block}
 .spc__msg{margin:6px 0 0;font-size:12px;color:#b3261e}
 .spc__msg:empty{margin:0}
 .spc__msg--ok{color:#1f1f1f}
@@ -73,6 +77,10 @@
       ma: /matelas a langer (offert|inclus|compris|gratuit|en cadeau)|(\+|\bet\b|\bavec\b) ?(le |un |son )?matelas a langer/,
       dr: /draps?( housse)? (offerts?|inclus|compris|gratuits?|en cadeau)|\+ ?\d* ?draps?\b/
     },
+    // Offre annoncée par la balise d'habillage pour cette fiche (ex. Black November, plan à langer offert, aux dates de
+    // son calque) : la ligne du rôle annoncé reste, avec ce libellé à la place du bouton + (plus d'ajout au panier
+    // depuis l'encart). prix: false = prix, éco-participation et prix barré masqués sur cette ligne.
+    inclus: { libelle: 'Inclus', prix: false },
 
     // Liste fiche -> produits proposés, recalculée chaque nuit par GitHub Actions, servie par le serveur de Sauthon
     dataUrl: 'https://docs.sauthon.com/CRO/pour-completer.json',
@@ -80,7 +88,7 @@
     calmMs: 1000,            // zone à l'écran et visiteur en train de faire défiler : insertion 1 s après son arrêt
     maxBytes: 50000,         // liste refusée au-delà (13 Ko aujourd'hui)
     maxAgeDays: 14,          // liste plus ancienne : pas d'encart · 0 = sans limite
-    version: '2026-10-31d',
+    version: '2026-11-05',
     // Un produit n'est proposé que si son titre PrestaShop, lu en direct, correspond au rôle annoncé par la liste
     // (pl plan à langer, ml matelas de lit / berceau, ma matelas à langer, so sommier, ho housse de matelas à langer,
     // dr draps housse, pa panière, co autre complément). Titres comparés en minuscules, sans accents.
@@ -162,6 +170,12 @@
   var pageTitle = normalizeTitle(productTitle());
   function hiddenRole(role) {
     return own(CONFIG.hideRoles, role) && CONFIG.hideRoles[role].test(pageTitle);
+  }
+  // Rôle offert sur cette fiche d'après la balise d'habillage (lu à chaque affichage de ligne)
+  function included(role) {
+    var o = window.__croOffre;
+    return !!(o && typeof o === 'object' && own(o, role) && o[role] &&
+      (!o[role].product_id || String(o[role].product_id) === productId));
   }
 
   var started = new Date().getTime();
@@ -368,6 +382,7 @@
     // Événements : product_id + produit concerné ; plan_* conservés pour un plan à langer (compatibilité des rapports)
     function itemPayload(line) {
       var o = { item_id: line.id, item_role: line.role, item_name: line.data.name, item_price: line.data.price };
+      if (line.inclus) o.item_inclus = true;   // ligne « Inclus » (offre annoncée par la balise d'habillage)
       if (line.role === 'pl') { o.plan_id = line.id; o.plan_name = line.data.name; o.plan_price = line.data.price; }
       return o;
     }
@@ -454,12 +469,14 @@
     function render(line) {
       var item = line.el;
       var data = line.data;
-      item.className = 'spc__item';
+      var inc = line.inclus = included(line.role);   // offre en cours : « Inclus » à la place du bouton +
+      var withPrice = !inc || CONFIG.inclus.prix === true;
+      item.className = 'spc__item' + (inc ? ' spc__item--inclus' : '');
       item.innerHTML =
         '<a class="spc__img"><img loading="lazy" width="72" height="72"></a>' +
         '<div class="spc__info"><a class="spc__name"></a>' +
-        '<div class="spc__prices"><span class="spc__price"></span></div></div>' +
-        '<button type="button" class="spc__add"></button>';
+        (withPrice ? '<div class="spc__prices"><span class="spc__price"></span></div>' : '') + '</div>' +
+        (inc ? '<span class="spc__inclus">' + ICON_CHECK + '<span></span></span>' : '<button type="button" class="spc__add"></button>');
 
       var links = item.querySelectorAll('a');
       for (var i = 0; i < links.length; i++) links[i].href = data.url;
@@ -472,6 +489,16 @@
       img.alt = data.alt || data.name;
 
       item.querySelector('.spc__name').textContent = data.name;
+      if (inc) {
+        item.querySelector('.spc__inclus span').textContent = CONFIG.inclus.libelle;
+        line.btn = null;
+      } else {
+        line.btn = item.querySelector('.spc__add');
+        setButton(line, 'idle');
+        line.btn.addEventListener('click', function () { addToCart(line); });
+      }
+      if (!impressionSent && !impressionTimer) impressionTimer = setTimeout(sendImpression, CONFIG.impressionMaxMs);
+      if (!withPrice) return;
       item.querySelector('.spc__price').textContent = data.price;
 
       var prices = item.querySelector('.spc__prices');
@@ -501,12 +528,16 @@
         low.textContent = data.lowest;
         prices.parentNode.appendChild(low);
       }
-
-      line.btn = item.querySelector('.spc__add');
-      setButton(line, 'idle');
-      line.btn.addEventListener('click', function () { addToCart(line); });
-      if (!impressionSent && !impressionTimer) impressionTimer = setTimeout(sendImpression, CONFIG.impressionMaxMs);
     }
+    // Offre annoncée après l'affichage des lignes (balise d'habillage déclenchée plus tard) : lignes concernées
+    // redessinées, sauf pendant un ajout au panier
+    document.addEventListener('cro:offre', function () {
+      if (removed) return;
+      for (var j = 0; j < lines.length; j++) {
+        var x = lines[j];
+        if (x.data && !x.dropped && !x.busy && !x.inclus && included(x.role)) render(x);
+      }
+    });
 
     var msgOwner = null, msgKind = '';
     function say(owner, kind, text) {
@@ -525,6 +556,7 @@
 
     function setButton(line, state) {
       var b = line.btn;
+      if (!b) return;   // ligne « Inclus » : pas de bouton
       b.setAttribute('aria-disabled', state === 'idle' ? 'false' : 'true');
       if (state === 'loading') {
         b.innerHTML = '<span class="spc__spinner" aria-hidden="true"></span>';
@@ -567,7 +599,7 @@
       ownEmit = false;
     }
     function addToCart(line) {
-      if (line.busy || line.btn.getAttribute('aria-disabled') === 'true') return;
+      if (line.busy || !line.btn || line.btn.getAttribute('aria-disabled') === 'true') return;
       line.busy = true;
       sendImpression();   // l'impression précède toujours l'ajout (lignes déjà affichées)
       if (msgOwner && msgKind === 'erreur') unsay(msgOwner);   // nouvelle tentative : l'erreur précédente disparaît
