@@ -160,3 +160,9 @@ collection a plusieurs versions du même article. Exceptions (`NON_CROISES`) : a
 collections, et couvertures polaires xxCV1, qui gardent leur sélecteur Polaire / Maille. Même article sous une autre
 fin de référence : `ALIAS_SUFFIXE` (gigoteuses Lazare LXDO5 = DO1, LXDO7 = DO3 ; tour de lit LXTL5 = TL1). Les Unis (EC, TB, SA, PJ) et
 Petit Coeur / Petit Nuage / Petit Soleil (FJ, DX, MA) étaient déjà reliés par `COLLECTION_VARIANT`.
+
+## Images du catalogue Meta
+
+`docs/meta/` contient des images et un flux supplémentaire pour le catalogue Meta, servis par GitHub Pages (par exemple
+<https://yannthebrowz.github.io/sauthon-variantes/meta/black-november/flux-supplementaire.csv>). La tâche
+*Régénérer les variantes* les publie avec le reste de `docs/`, sans les modifier.
