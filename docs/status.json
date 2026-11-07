@@ -1,5 +1,5 @@
 {
-  "genere_le": "2026-11-07T10:05:10Z",
+  "genere_le": "2026-11-07T18:23:36Z",
   "produits_flux": 1666,
   "produits_relies": 946,
   "groupes_variantes": 264,
@@ -34,16 +34,16 @@
     ],
     "a_valider": []
   },
-  "encart_fiches": 659,
+  "encart_fiches": 658,
   "encart": {
-    "fiches": 659,
-    "lignes": 1246,
+    "fiches": 658,
+    "lignes": 1243,
     "roles": {
-      "dr": 97,
-      "ml": 242,
+      "dr": 96,
+      "ml": 241,
       "so": 11,
       "co": 512,
-      "ma": 232,
+      "ma": 231,
       "pl": 109,
       "ho": 34,
       "pa": 9
@@ -52,14 +52,14 @@
       "complement_demande": 580,
       "matelas_lit_junior": 11,
       "sommier": 11,
-      "matelas_lit_demande": 216,
+      "matelas_lit_demande": 215,
       "matelas_langer_accessoire": 77,
       "matelas_langer_defaut": 112,
       "tour_de_lit": 24,
       "plan": 109,
       "matelas_langer_a_confirmer": 25,
       "matelas_lit_autre": 15,
-      "matelas_langer_lit_combine": 55,
+      "matelas_langer_lit_combine": 53,
       "housse": 5,
       "complement_herite": 6
     },
