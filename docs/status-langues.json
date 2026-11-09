@@ -1,6 +1,6 @@
 {
-  "genere_le": "2026-11-08T18:34:20Z",
-  "t": 1794162860,
+  "genere_le": "2026-11-09T09:23:26Z",
+  "t": 1794216206,
   "statut": "ok",
   "langues": {
     "es": {
@@ -68,10 +68,14 @@
         "4047": "titre provisoire",
         "4048": "titre provisoire",
         "4053": "titre provisoire",
+        "4057": "titre provisoire",
         "4060": "titre provisoire",
+        "4061": "titre provisoire",
         "4071": "titre provisoire",
         "4075": "titre provisoire",
         "4076": "titre provisoire",
+        "4087": "titre provisoire",
+        "4099": "titre provisoire",
         "4115": "titre provisoire",
         "4116": "titre provisoire",
         "4118": "titre provisoire",
@@ -143,7 +147,7 @@
         "sans_traduction": [],
         "collisions": []
       },
-      "version_en_ligne": "2026-11-08T18:34:20Z"
+      "version_en_ligne": "2026-11-09T09:23:26Z"
     },
     "it": {
       "statut": "ok",
@@ -217,10 +221,14 @@
         "4047": "titre provisoire",
         "4048": "titre provisoire",
         "4053": "titre provisoire",
+        "4057": "titre provisoire",
         "4060": "titre provisoire",
+        "4061": "titre provisoire",
         "4071": "titre provisoire",
         "4075": "titre provisoire",
         "4076": "titre provisoire",
+        "4087": "titre provisoire",
+        "4099": "titre provisoire",
         "4115": "titre provisoire",
         "4116": "titre provisoire",
         "4118": "titre provisoire",
@@ -294,7 +302,7 @@
         "sans_traduction": [],
         "collisions": []
       },
-      "version_en_ligne": "2026-11-08T18:34:20Z"
+      "version_en_ligne": "2026-11-09T09:23:26Z"
     }
   }
 }
