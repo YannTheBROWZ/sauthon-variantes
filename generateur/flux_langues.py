@@ -39,6 +39,18 @@ def probleme(langue, rows):
     return None
 
 
+def sans_prefixe(raw, nom):
+    """Texte avant le XML (avertissements PHP « Deprecated: … » du module de flux, vus le 09/11/2026) : ignoré et signalé
+    dans le journal ; un XML abîmé plus loin reste refusé par le lecteur."""
+    i = raw.find(b'<?xml')
+    if i < 0:
+        i = raw.find(b'<rss')
+    if i > 0:
+        print(f'{nom} : {i} octets de texte avant le XML ignorés ({raw[:i].strip()[:80]!r})', flush=True)
+        return raw[i:]
+    return raw
+
+
 def lire(langue, fichier=None):
     """Lignes du flux de la langue, ou None après le dernier essai (raison affichée dans le journal)."""
     for n, attente in enumerate((0,) if fichier else ATTENTES, start=1):
@@ -51,7 +63,7 @@ def lire(langue, fichier=None):
             else:
                 req = urllib.request.Request(URLS[langue], headers={'User-Agent': 'Mozilla/5.0'})
                 raw = urllib.request.urlopen(req, timeout=120).read()
-            rows = lignes(ET.fromstring(raw))
+            rows = lignes(ET.fromstring(sans_prefixe(raw, langue)))
             raison = probleme(langue, rows)
             if raison is None:
                 return rows

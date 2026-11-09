@@ -13,6 +13,18 @@ MIN_PRODUITS = 800                   # même seuil que MIN_FLUX dans verifier.py
 ARRET = 'rien n\'est publié, la version précédente reste en ligne.'
 
 
+def sans_prefixe(raw, nom):
+    """Texte avant le XML (avertissements PHP « Deprecated: … » du module de flux, vus le 09/11/2026) : ignoré et signalé
+    dans le journal ; un XML abîmé plus loin reste refusé par le lecteur."""
+    i = raw.find(b'<?xml')
+    if i < 0:
+        i = raw.find(b'<rss')
+    if i > 0:
+        print(f'{nom} : {i} octets de texte avant le XML ignorés ({raw[:i].strip()[:80]!r})', flush=True)
+        return raw[i:]
+    return raw
+
+
 def telecharger():
     for n, attente in enumerate(ATTENTES, start=1):
         if attente:
@@ -20,7 +32,7 @@ def telecharger():
             time.sleep(attente)
         try:
             raw = urllib.request.urlopen(urllib.request.Request(URL, headers={'User-Agent': 'Mozilla/5.0'}), timeout=120).read()
-            root = ET.fromstring(raw)
+            root = ET.fromstring(sans_prefixe(raw, 'fr'))
             nb = len(root.findall('.//item'))
             if nb >= MIN_PRODUITS:
                 return root

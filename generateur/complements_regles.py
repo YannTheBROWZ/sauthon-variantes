@@ -75,6 +75,12 @@ COMPLEMENTS_PAR_REF = {
     'UI101': ['TBPB1', 'BWDO1'],
     'DU111': ['XEML1', 'XEPB1'],   # duo lit chambre + armoire UP chêne silex : matelas à langer et protections Baby Sailor (04/11)
     'LXTL5': ['LXED5', 'LXED6', 'LXDO5'],   # tour de lit Lazare : édredons 120x60 / 140x70 et gigoteuse 0-6 mois (04/11)
+    # demandes du 09/11 (encart sur toutes les langues ; 3 lignes au plus, lits : matelas, 1er drap, puis la demande)
+    'HO111': ['SCPB1', 'RLPB1', 'RLDH1'],   # lit Choco 140x70 : en plus du matelas ; RLPB1 ne rentre pas (4e ligne)
+    'HO955': ['ECML1', 'SCML1'],   # dispositif Choco : SCML1 « en plus du matelas à langer proposé » (l'uni ECML1 gardé)
+    'DU207': ['SCML1', 'RLML1'],   # commode + dispositif Choco : matelas à langer Emmy et Léopard
+    'BD111': ['SVPB4', 'SVDN2'],   # lit Bohème : demandés « SVPB1 et SVDN1 », absents du catalogue ; protections et
+                                   # gigoteuse naissance Petit Écossais, les seules de la collection (SV)
 }
 # Lits combinés dont le matelas à langer est fourni (réponse du 02/11 : matelas à langer « sauf EW101 et BJ101 », « ajouter
 # housse de matelas à langer EC, WV, SA, TB ») : pas de matelas à langer, mais les housses de matelas à langer (références
