@@ -1,6 +1,6 @@
 {
-  "genere_le": "2026-11-09T09:23:26Z",
-  "t": 1794216206,
+  "genere_le": "2026-11-09T11:31:24Z",
+  "t": 1794223884,
   "statut": "ok",
   "langues": {
     "es": {
@@ -8,14 +8,14 @@
       "publie": true,
       "erreurs": [],
       "avertissements": [],
-      "produits_flux": 1666,
-      "produits_relies": 919,
-      "groupes_variantes": 264,
-      "fiches_composition": 195,
+      "produits_flux": 1664,
+      "produits_relies": 917,
+      "groupes_variantes": 262,
+      "fiches_composition": 193,
       "francais": {
-        "produits_relies": 946,
-        "groupes_variantes": 264,
-        "fiches_composition": 221
+        "produits_relies": 944,
+        "groupes_variantes": 262,
+        "fiches_composition": 219
       },
       "produits_retires": {
         "4115": "titre provisoire dans cette langue (« new », « copia de… »)",
@@ -147,25 +147,23 @@
         "sans_traduction": [],
         "collisions": []
       },
-      "version_en_ligne": "2026-11-09T09:23:26Z"
+      "version_en_ligne": "2026-11-09T11:31:24Z"
     },
     "it": {
       "statut": "ok",
       "publie": true,
       "erreurs": [],
       "avertissements": [],
-      "produits_flux": 1666,
+      "produits_flux": 1664,
       "produits_relies": 917,
       "groupes_variantes": 262,
       "fiches_composition": 193,
       "francais": {
-        "produits_relies": 946,
-        "groupes_variantes": 264,
-        "fiches_composition": 221
+        "produits_relies": 944,
+        "groupes_variantes": 262,
+        "fiches_composition": 219
       },
       "produits_retires": {
-        "3039": "sans nom dans cette langue",
-        "3442": "sans nom dans cette langue",
         "4115": "titre provisoire dans cette langue (« new », « copia de… »)",
         "4116": "titre provisoire dans cette langue (« new », « copia de… »)",
         "4117": "titre provisoire dans cette langue (« new », « copia de… »)",
@@ -193,13 +191,11 @@
       "sans_traduction": [],
       "collisions": [],
       "non_publies": {
-        "groupe de moins de 2 produits dans cette langue": 2,
-        "composition d'un produit absent, sans nom, au titre provisoire ou à l'adresse refusée": 23,
-        "composition de moins de 2 choix dans cette langue": 5
+        "composition de moins de 2 choix dans cette langue": 4,
+        "composition d'un produit absent, sans nom, au titre provisoire ou à l'adresse refusée": 22
       },
       "choix_retires": {
-        "absent, sans nom, titre provisoire ou adresse refusée": 2,
-        "choix de composition absent ou sans traduction": 17
+        "choix de composition absent ou sans traduction": 16
       },
       "titres_identiques_au_francais": [
         "362",
@@ -213,8 +209,6 @@
         "2728"
       ],
       "encart_produits_a_corriger": {
-        "3039": "sans nom",
-        "3442": "sans nom",
         "4043": "titre provisoire",
         "4045": "titre provisoire",
         "4046": "titre provisoire",
@@ -273,8 +267,6 @@
       },
       "reference": {
         "produits_retires": {
-          "3039": "sans nom dans cette langue",
-          "3442": "sans nom dans cette langue",
           "4115": "titre provisoire dans cette langue (« new », « copia de… »)",
           "4116": "titre provisoire dans cette langue (« new », « copia de… »)",
           "4117": "titre provisoire dans cette langue (« new », « copia de… »)",
@@ -302,7 +294,7 @@
         "sans_traduction": [],
         "collisions": []
       },
-      "version_en_ligne": "2026-11-09T09:23:26Z"
+      "version_en_ligne": "2026-11-09T11:31:24Z"
     }
   }
 }
