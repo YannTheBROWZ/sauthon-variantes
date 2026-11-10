@@ -1,9 +1,9 @@
 {
-  "genere_le": "2026-11-10T11:11:50Z",
-  "produits_flux": 1663,
-  "produits_relies": 945,
-  "groupes_variantes": 262,
-  "fiches_composition": 219,
+  "genere_le": "2026-11-10T19:10:58Z",
+  "produits_flux": 1662,
+  "produits_relies": 948,
+  "groupes_variantes": 263,
+  "fiches_composition": 220,
   "packs_lus": "121/125",
   "packs_supprimes": [],
   "pour_completer": {
@@ -72,7 +72,7 @@
     "listes_de_la_veille": 0,
     "listes_sans_pages": 0,
     "refs_inconnues": {},
-    "empreinte": "2e49009fb434"
+    "empreinte": "30d95393ab25"
   },
   "statut": "ok",
   "erreurs": []

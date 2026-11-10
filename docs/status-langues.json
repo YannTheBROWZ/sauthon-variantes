@@ -1,21 +1,23 @@
 {
-  "genere_le": "2026-11-10T11:11:50Z",
-  "t": 1794309110,
-  "statut": "ok",
+  "genere_le": "2026-11-10T19:10:58Z",
+  "t": 1794337858,
+  "statut": "avertissement",
   "langues": {
     "es": {
-      "statut": "ok",
+      "statut": "avertissement",
       "publie": true,
       "erreurs": [],
-      "avertissements": [],
-      "produits_flux": 1663,
-      "produits_relies": 918,
-      "groupes_variantes": 262,
+      "avertissements": [
+        "1 produits retirés de cette langue depuis sa dernière publication (absents, sans nom, titre provisoire ou adresse refusée, détail dans « produits_retires ») : ['4169']."
+      ],
+      "produits_flux": 1662,
+      "produits_relies": 920,
+      "groupes_variantes": 263,
       "fiches_composition": 193,
       "francais": {
-        "produits_relies": 945,
-        "groupes_variantes": 262,
-        "fiches_composition": 219
+        "produits_relies": 948,
+        "groupes_variantes": 263,
+        "fiches_composition": 220
       },
       "produits_retires": {
         "4115": "titre provisoire dans cette langue (« new », « copia de… »)",
@@ -40,13 +42,14 @@
         "4156": "titre provisoire dans cette langue (« new », « copia de… »)",
         "4157": "titre provisoire dans cette langue (« new », « copia de… »)",
         "4162": "titre provisoire dans cette langue (« new », « copia de… »)",
-        "4163": "titre provisoire dans cette langue (« new », « copia de… »)"
+        "4163": "titre provisoire dans cette langue (« new », « copia de… »)",
+        "4169": "titre provisoire dans cette langue (« new », « copia de… »)"
       },
       "sans_traduction": [],
       "collisions": [],
       "non_publies": {
         "composition de moins de 2 choix dans cette langue": 4,
-        "composition d'un produit absent, sans nom, au titre provisoire ou à l'adresse refusée": 22
+        "composition d'un produit absent, sans nom, au titre provisoire ou à l'adresse refusée": 23
       },
       "choix_retires": {
         "choix de composition absent ou sans traduction": 16
@@ -142,26 +145,29 @@
           "4156": "titre provisoire dans cette langue (« new », « copia de… »)",
           "4157": "titre provisoire dans cette langue (« new », « copia de… »)",
           "4162": "titre provisoire dans cette langue (« new », « copia de… »)",
-          "4163": "titre provisoire dans cette langue (« new », « copia de… »)"
+          "4163": "titre provisoire dans cette langue (« new », « copia de… »)",
+          "4169": "titre provisoire dans cette langue (« new », « copia de… »)"
         },
         "sans_traduction": [],
         "collisions": []
       },
-      "version_en_ligne": "2026-11-10T11:11:50Z"
+      "version_en_ligne": "2026-11-10T19:10:58Z"
     },
     "it": {
-      "statut": "ok",
+      "statut": "avertissement",
       "publie": true,
       "erreurs": [],
-      "avertissements": [],
-      "produits_flux": 1663,
-      "produits_relies": 918,
-      "groupes_variantes": 262,
+      "avertissements": [
+        "1 produits retirés de cette langue depuis sa dernière publication (absents, sans nom, titre provisoire ou adresse refusée, détail dans « produits_retires ») : ['4169']."
+      ],
+      "produits_flux": 1662,
+      "produits_relies": 920,
+      "groupes_variantes": 263,
       "fiches_composition": 193,
       "francais": {
-        "produits_relies": 945,
-        "groupes_variantes": 262,
-        "fiches_composition": 219
+        "produits_relies": 948,
+        "groupes_variantes": 263,
+        "fiches_composition": 220
       },
       "produits_retires": {
         "4115": "titre provisoire dans cette langue (« new », « copia de… »)",
@@ -186,13 +192,14 @@
         "4156": "titre provisoire dans cette langue (« new », « copia de… »)",
         "4157": "titre provisoire dans cette langue (« new », « copia de… »)",
         "4162": "titre provisoire dans cette langue (« new », « copia de… »)",
-        "4163": "titre provisoire dans cette langue (« new », « copia de… »)"
+        "4163": "titre provisoire dans cette langue (« new », « copia de… »)",
+        "4169": "titre provisoire dans cette langue (« new », « copia de… »)"
       },
       "sans_traduction": [],
       "collisions": [],
       "non_publies": {
         "composition de moins de 2 choix dans cette langue": 4,
-        "composition d'un produit absent, sans nom, au titre provisoire ou à l'adresse refusée": 22
+        "composition d'un produit absent, sans nom, au titre provisoire ou à l'adresse refusée": 23
       },
       "choix_retires": {
         "choix de composition absent ou sans traduction": 16
@@ -289,12 +296,13 @@
           "4156": "titre provisoire dans cette langue (« new », « copia de… »)",
           "4157": "titre provisoire dans cette langue (« new », « copia de… »)",
           "4162": "titre provisoire dans cette langue (« new », « copia de… »)",
-          "4163": "titre provisoire dans cette langue (« new », « copia de… »)"
+          "4163": "titre provisoire dans cette langue (« new », « copia de… »)",
+          "4169": "titre provisoire dans cette langue (« new », « copia de… »)"
         },
         "sans_traduction": [],
         "collisions": []
       },
-      "version_en_ligne": "2026-11-10T11:11:50Z"
+      "version_en_ligne": "2026-11-10T19:10:58Z"
     }
   }
 }
