@@ -48,7 +48,7 @@ FAMILY_WORDS = {
     'GALOPIN': ['galopin'], 'PURE': ['pure'], 'MYLOVE': ['my love'], 'ILOTBEBE': ['ilot bebe'],
 }
 TITLE_FAMILIES = ['sunlight', 'seventies', 'basic', 'arty', 'camille', 'galopin', 'bambin', 'boreale', 'eclipse',
-                  'orsino', 'esmee', 'botanica']
+                  'orsino', 'esmee', 'botanica', 'new york']
 
 # ---------- Attributs ----------
 COLORS = [
@@ -124,6 +124,8 @@ MERGES = [  # (ids, commentaire)
     ([2739, 2740, 2741, 2742, 2743, 2744, 2745, 2746, 2747], 'Gigoteuses Promenons-nous : motif végétal, Tilleul, Jaune topaze'),
     # demandes de la cliente du 02/11/2026 (hors tableau)
     ([3031, 3032], 'Lits 120x60 tout barreaux FIRST 2H035 (Blanc) / 2H038 (vernis naturel = Bois)'),
+    # demande du 10/11/2026 : collection New York (seuls les packs sont en vente)
+    ([4165, 4168], 'Duos New York : lit 120x60 / lit évolutif 140x70 + commode 3 tiroirs (« Taille du lit »)'),
 ]
 # libellé du sélecteur « couleur » d'un regroupement (clé : 1er id du regroupement) : Couleur par défaut
 GROUP_ATTR = {3951: 'Modèle', 3296: 'Motif', 2684: 'Coloris', 2739: 'Coloris', 2960: 'Modèle', 2972: 'Modèle'}  # tout id du regroupement convient
@@ -676,6 +678,11 @@ for sid, content in MANUAL_PACKS.items():   # ensembles hors packs PrestaShop, c
     if sid in items and all(i in items for i in content):
         PACKS.setdefault(sid, content)
 PIECE_LABEL = {'lit': 'Lit seul', 'commode': 'Commode seule', 'armoire': 'Armoire seule'}
+# Pièces de packs désactivées dans PrestaShop (absentes du flux, page 404) : elles servent seulement à reconnaître le
+# contenu des packs (duo, commode + plan à langer…) et ne sont jamais proposées. Demande du 10/11/2026 : collection
+# New York, dont seuls les packs DU216, DU217 et DU218 sont en vente.
+PIECES_HORS_VENTE = {2201: ('lit', '120x60'), 2202: ('lit', '140x70'), 2203: ('commode', None), 2204: ('armoire', None),
+                     2205: ('plan', None)}
 PIECE_LABEL_OVERRIDE = {3628: 'Meuble à langer seul'}
 TYPE_ORDER = ['pack', 'duo', 'duo_armoire', 'trio']
 
@@ -683,7 +690,7 @@ TYPE_ORDER = ['pack', 'duo', 'duo_armoire', 'trio']
 def piece_type(pid):
     it = items.get(pid)
     if not it:
-        return None
+        return PIECES_HORS_VENTE.get(pid, (None,))[0]
     t = title_of(it['t'])
     if 'a langer' in t and re.match(r'(dispositif|plan)', t):
         return 'plan'
@@ -697,7 +704,7 @@ def piece_type(pid):
 
 
 def pack_type(sid):
-    if any(i not in items for i in PACKS[sid]):  # une pièce a quitté le flux : pack ignoré
+    if any(i not in items and i not in PIECES_HORS_VENTE for i in PACKS[sid]):  # une pièce a quitté le flux : pack ignoré
         return None
     kinds = {piece_type(i) for i in PACKS[sid]}
     if kinds == {'commode', 'plan'}:
@@ -719,7 +726,9 @@ def pack_label(sid):
 
 def bed_size(sid):
     for i in PACKS.get(sid, []):
-        if piece_type(i) == 'lit' and items[i]['sizes']:
+        if piece_type(i) == 'lit' and i not in items and PIECES_HORS_VENTE[i][1]:
+            return PIECES_HORS_VENTE[i][1]
+        if piece_type(i) == 'lit' and i in items and items[i]['sizes']:
             return items[i]['sizes'][0]
     return items[sid]['sizes'][0] if items[sid]['sizes'] else None
 
@@ -755,14 +764,14 @@ for pid in list(containing) + list(PACKS):
         content = PACKS[pid]
         anchor = next((i for i in content if piece_type(i) == 'commode'), None) or \
             next((i for i in content if piece_type(i) == 'armoire'), None)
-        if not anchor or anchor not in items:
+        if not anchor or (anchor not in items and anchor not in PIECES_HORS_VENTE):
             continue
         if pack_type(pid) in ROOM_SETS:
             opts = [o for o in pick(containing[anchor], bed_size(pid), prefer=pid) if pack_type(o[1]) in ROOM_SETS]
             if pid in MANUAL_PACKS:   # pas de bloc « Ce pack contient » sur ces fiches : les pièces seules sont proposées
                 opts = [(PIECE_LABEL[piece_type(i)], i) for i in content if piece_type(i) in PIECE_LABEL] + opts
-        else:
-            opts = [(PIECE_LABEL_OVERRIDE.get(anchor, PIECE_LABEL[piece_type(anchor)]), anchor)]
+        else:   # pièce seule proposée seulement si elle est en vente
+            opts = [(PIECE_LABEL_OVERRIDE.get(anchor, PIECE_LABEL[piece_type(anchor)]), anchor)] if anchor in items else []
             opts += pick(containing[anchor], bed_size(pid), prefer=pid)
     else:
         ptype = piece_type(pid)
