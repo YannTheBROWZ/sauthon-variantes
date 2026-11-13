@@ -1,7 +1,7 @@
 {
-  "genere_le": "2026-11-12T21:10:16Z",
-  "t": 1794517816,
-  "statut": "avertissement",
+  "genere_le": "2026-11-13T10:58:48Z",
+  "t": 1794567528,
+  "statut": "ok",
   "langues": {
     "es": {
       "statut": "ok",
@@ -149,15 +149,13 @@
         "sans_traduction": [],
         "collisions": []
       },
-      "version_en_ligne": "2026-11-12T21:10:16Z"
+      "version_en_ligne": "2026-11-13T10:58:48Z"
     },
     "it": {
-      "statut": "avertissement",
+      "statut": "ok",
       "publie": true,
       "erreurs": [],
-      "avertissements": [
-        "2 produits retirés de cette langue depuis sa dernière publication (absents, sans nom, titre provisoire ou adresse refusée, détail dans « produits_retires ») : ['3039', '3442']."
-      ],
+      "avertissements": [],
       "produits_flux": 1664,
       "produits_relies": 920,
       "groupes_variantes": 263,
@@ -308,7 +306,7 @@
         "sans_traduction": [],
         "collisions": []
       },
-      "version_en_ligne": "2026-11-12T21:10:16Z"
+      "version_en_ligne": "2026-11-13T10:58:48Z"
     }
   }
 }
