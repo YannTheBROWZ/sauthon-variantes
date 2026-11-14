@@ -1,6 +1,6 @@
 {
-  "genere_le": "2026-11-14T10:23:07Z",
-  "t": 1794651787,
+  "genere_le": "2026-11-14T18:56:39Z",
+  "t": 1794682599,
   "statut": "ok",
   "langues": {
     "es": {
@@ -8,12 +8,12 @@
       "publie": true,
       "erreurs": [],
       "avertissements": [],
-      "produits_flux": 1664,
-      "produits_relies": 922,
+      "produits_flux": 1663,
+      "produits_relies": 921,
       "groupes_variantes": 265,
       "fiches_composition": 195,
       "francais": {
-        "produits_relies": 950,
+        "produits_relies": 949,
         "groupes_variantes": 265,
         "fiches_composition": 222
       },
@@ -149,19 +149,19 @@
         "sans_traduction": [],
         "collisions": []
       },
-      "version_en_ligne": "2026-11-14T10:23:07Z"
+      "version_en_ligne": "2026-11-14T18:56:39Z"
     },
     "it": {
       "statut": "ok",
       "publie": true,
       "erreurs": [],
       "avertissements": [],
-      "produits_flux": 1664,
-      "produits_relies": 920,
+      "produits_flux": 1663,
+      "produits_relies": 919,
       "groupes_variantes": 263,
       "fiches_composition": 193,
       "francais": {
-        "produits_relies": 950,
+        "produits_relies": 949,
         "groupes_variantes": 265,
         "fiches_composition": 222
       },
@@ -306,7 +306,7 @@
         "sans_traduction": [],
         "collisions": []
       },
-      "version_en_ligne": "2026-11-14T10:23:07Z"
+      "version_en_ligne": "2026-11-14T18:56:39Z"
     }
   }
 }
