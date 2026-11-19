@@ -81,6 +81,12 @@ COMPLEMENTS_PAR_REF = {
     'DU207': ['SCML1', 'RLML1'],   # commode + dispositif Choco : matelas à langer Emmy et Léopard
     'BD111': ['SVPB4', 'SVDN2'],   # lit Bohème : demandés « SVPB1 et SVDN1 », absents du catalogue ; protections et
                                    # gigoteuse naissance Petit Écossais, les seules de la collection (SV)
+    # demandes du 19/11 : compléments « normaux » donnés avec un coup de cœur (voir COUPS_DE_COEUR_PAR_REF)
+    **{r: ['SJML1'] for r in ('DU219', 'TR046')},   # Solène duo et trio : matelas à langer Sunlight, en plus du matelas
+    **{r: ['BWML1'] for r in ('DU216', 'DU217')},   # New York duo 120x60, commode + dispositif : matelas à langer Babyfan
+    'RLDN1': ['RLDO1'],   # gigoteuse naissance Léopard : gigoteuse hiver Léopard
+    'RLDO1': ['RLTT1'],   # gigoteuse hiver Léopard : trousse de toilette Léopard
+    'WVDN1': ['WVCV1'],   # gigoteuse naissance Orsino : couverture Orsino
 }
 # Lits combinés dont le matelas à langer est fourni (réponse du 02/11 : matelas à langer « sauf EW101 et BJ101 », « ajouter
 # housse de matelas à langer EC, WV, SA, TB ») : pas de matelas à langer, mais les housses de matelas à langer (références
@@ -110,3 +116,21 @@ COMPLEMENTS_MOTIFS = [
     (r'(BW|XC|QJ)TL[12]', ['{p}ED1', '{p}ED2', '{p}DO1']),
 ]
 
+# Coups de cœur (demande du 19/11/2026) : un produit par fiche, en DERNIÈRE ligne de l'encart, en plus de ses 3 lignes, avec
+# l'étiquette « Coup de ♥ » (balise 2026-11-19 et suivantes ; les précédentes l'affichent comme un complément ordinaire,
+# dans la limite de leurs 3 lignes). Règle par référence de la fiche d'abord, puis par type de fiche (encart.coup_de_coeur).
+COUPS_DE_COEUR_PAR_REF = {
+    **{r: 'SJMM1' for r in ('DU219', 'TR046')},   # Solène duo et trio (demandé « DU219 et TR045 » : TR045 est le trio Choco)
+    **{r: 'BWMM1' for r in ('DU216', 'DU217')},   # New York duo 120x60 et commode + dispositif
+    'RLDN1': 'RLCV1',     # gigoteuse naissance Léopard : couverture velours côtelé et sherpa
+    'RLDO1': 'RLCV3',     # gigoteuse hiver Léopard : demandé « RLCV2 », absente du catalogue ; RLCV3, la couverture en gaze
+    'WVDN1': 'RLCV1',     # gigoteuse naissance Orsino : couverture Léopard
+}
+COUP_DE_COEUR_DUO_TRIO = 'WVNA2'          # duos et trios (nid d'ange hiver Orsino)
+# lits seuls, par collection : (famille de regroupement.py, coloris ou None) -> référence
+COUPS_DE_COEUR_LITS = [
+    (('ARTY', None), 'ESMM1'), (('SERENA', None), 'ESMM1'), (('ACCESS', 'Bois blanc'), 'ESMM1'),   # mobile Esmée
+    (('ACCESS', 'Bois'), 'PRMM1'), (('AZUR', None), 'PRMM1'),                                     # mobile Promenons-nous
+]
+COUP_DE_COEUR_LIT_120_140 = 'RLMM3'       # autres lits 120x60 / 140x70 : demandé « RLMM2 », absent ; RLMM3, mobile Léopard
+COUP_DE_COEUR_AUTRES_LITS = 'WVMM2'       # autres lits (junior, 100x50…) : mobile Orsino

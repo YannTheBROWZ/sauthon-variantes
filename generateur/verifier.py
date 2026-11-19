@@ -18,6 +18,7 @@ MIN_COMPOSITIONS = 120       # ~203 fiches avec composition aujourd'hui
 MIN_ENCART = 200             # ~305 fiches avec au moins une ligne publiée dans l'encart (plan, matelas, compléments)
 MAX_CHANGEMENT_ENCART = 0.2  # à règles égales, plus de 20 % des listes (et 30 fiches) qui changent d'un coup : anomalie
 MAX_LIGNES_ENCART = 3
+CC_ENCART = 'cc'          # 3e élément de la dernière ligne : produit coup de cœur, en plus des 3 lignes (demande du 19/11)
 ROLES_ENCART = {'pl', 'ml', 'ma', 'so', 'ho', 'dr', 'pa', 'co'}
 
 # Mêmes règles de format et mêmes plafonds que les balises GTM : un fichier qu'elles refuseraient
@@ -100,12 +101,16 @@ if pc is not None:
         errors.append(f'Pour compléter : identifiants hors format : {bad[:10]}')
     if len(json.dumps(pc, ensure_ascii=False, separators=(',', ':'))) > MAX_CARACTERES_PC:
         errors.append(f'pour-completer.json dépasserait {MAX_CARACTERES_PC} caractères (refusé par la balise).')
-    # lignes de l'encart (encart.py) : [[id produit, rôle], ...] par fiche, MAX_LIGNES_ENCART au plus
+    # lignes de l'encart (encart.py) : [[id produit, rôle], ...] par fiche, MAX_LIGNES_ENCART au plus, plus une dernière
+    # ligne [id, rôle, 'cc'] (coup de cœur)
     lignes = pc.get('l')
     if lignes is not None:
+        def avec_cc(v):
+            return bool(v) and isinstance(v[-1], list) and len(v[-1]) == 3
         mal = [k for k, v in lignes.items() if not (
-            re.fullmatch(r'\d{1,7}', k) and isinstance(v, list) and 1 <= len(v) <= MAX_LIGNES_ENCART
-            and all(isinstance(x, list) and len(x) == 2 and est_id(x[0]) and x[1] in ROLES_ENCART and str(x[0]) != k for x in v)
+            re.fullmatch(r'\d{1,7}', k) and isinstance(v, list) and 1 <= len(v) <= MAX_LIGNES_ENCART + avec_cc(v)
+            and all(isinstance(x, list) and (len(x) == 2 or (len(x) == 3 and x[2] == CC_ENCART and i == len(v) - 1))
+                    and est_id(x[0]) and x[1] in ROLES_ENCART and str(x[0]) != k for i, x in enumerate(v))
             and len({x[0] for x in v}) == len(v))]
         if mal:
             errors.append(f'Encart : lignes hors format : {mal[:10]}')

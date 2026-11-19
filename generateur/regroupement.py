@@ -48,7 +48,7 @@ FAMILY_WORDS = {
     'GALOPIN': ['galopin'], 'PURE': ['pure'], 'MYLOVE': ['my love'], 'ILOTBEBE': ['ilot bebe'],
 }
 TITLE_FAMILIES = ['sunlight', 'seventies', 'basic', 'arty', 'camille', 'galopin', 'bambin', 'boreale', 'eclipse',
-                  'orsino', 'esmee', 'botanica', 'new york']
+                  'orsino', 'esmee', 'botanica', 'new york', 'solene']
 
 # ---------- Attributs ----------
 COLORS = [
@@ -680,9 +680,10 @@ for sid, content in MANUAL_PACKS.items():   # ensembles hors packs PrestaShop, c
 PIECE_LABEL = {'lit': 'Lit seul', 'commode': 'Commode seule', 'armoire': 'Armoire seule'}
 # Pièces de packs désactivées dans PrestaShop (absentes du flux, page 404) : elles servent seulement à reconnaître le
 # contenu des packs (duo, commode + plan à langer…) et ne sont jamais proposées. Demande du 10/11/2026 : collection
-# New York, dont seuls les packs DU216, DU217 et DU218 sont en vente.
+# New York, dont seuls les packs DU216, DU217 et DU218 sont en vente ; 19/11 : Solène (DU219, DU220, TR046).
 PIECES_HORS_VENTE = {2201: ('lit', '120x60'), 2202: ('lit', '140x70'), 2203: ('commode', None), 2204: ('armoire', None),
-                     2205: ('plan', None)}
+                     2205: ('plan', None),
+                     2940: ('lit', '120x60'), 2944: ('commode', None), 2946: ('plan', None), 2947: ('armoire', None)}
 PIECE_LABEL_OVERRIDE = {3628: 'Meuble à langer seul'}
 TYPE_ORDER = ['pack', 'duo', 'duo_armoire', 'trio']
 
@@ -767,7 +768,10 @@ for pid in list(containing) + list(PACKS):
         if not anchor or (anchor not in items and anchor not in PIECES_HORS_VENTE):
             continue
         if pack_type(pid) in ROOM_SETS:
-            opts = [o for o in pick(containing[anchor], bed_size(pid), prefer=pid) if pack_type(o[1]) in ROOM_SETS]
+            # commode hors vente : les packs tiennent lieu de pièces seules, tous proposés entre eux (commode + plan à
+            # langer, duo, trio ; demande du 19/11 : New York, Solène)
+            types_ok = ROOM_SETS | {'pack'} if anchor not in items else ROOM_SETS
+            opts = [o for o in pick(containing[anchor], bed_size(pid), prefer=pid) if pack_type(o[1]) in types_ok]
             if pid in MANUAL_PACKS:   # pas de bloc « Ce pack contient » sur ces fiches : les pièces seules sont proposées
                 opts = [(PIECE_LABEL[piece_type(i)], i) for i in content if piece_type(i) in PIECE_LABEL] + opts
         else:   # pièce seule proposée seulement si elle est en vente

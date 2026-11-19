@@ -10,6 +10,9 @@ Seules les lignes dont la règle est validée sont publiées (PUBLIER) ; les aut
 
 Format publié (lu par le tag GTM, version 2026-10-30 et suivantes ; les versions précédentes ne lisent que « map ») :
   "l": {"<fiche>": [[<id produit>, "<rôle>"], ...]}
+  Coup de cœur (demande du 19/11/2026) : au plus une ligne [<id>, "co", "cc"], toujours la dernière, en plus des
+  MAX_LIGNES lignes ; le tag 2026-11-19 l'affiche avec l'étiquette « Coup de ♥ », les précédents comme un complément
+  ordinaire (3e élément ignoré, dans la limite de leurs 3 lignes).
   "r": empreinte des règles (verifier.py ne compare les listes d'une génération à l'autre qu'à règles égales)
 Rôles : pl plan à langer, ml matelas de lit ou de berceau, ma matelas à langer, so sommier, ho housse de matelas à langer,
 dr draps housse, pa panière, co autre complément. Le tag vérifie chaque rôle sur le titre lu en direct sur PrestaShop.
@@ -24,6 +27,8 @@ import hashlib, json, os, re
 exec(open('regroupement.py').read().split("if __name__")[0])
 from pour_completer_regles import A_VALIDER
 from complements_regles import COMPLEMENTS, COMPLEMENTS_PAR_REF, COMPLEMENTS_MOTIFS, HOUSSES_LIT_COMBINE
+from complements_regles import (COUPS_DE_COEUR_PAR_REF, COUP_DE_COEUR_DUO_TRIO, COUPS_DE_COEUR_LITS,
+                                COUP_DE_COEUR_LIT_120_140, COUP_DE_COEUR_AUTRES_LITS)
 
 MAX_LIGNES = 3
 ROLES = ('pl', 'ml', 'ma', 'so', 'ho', 'dr', 'pa', 'co')
@@ -48,7 +53,9 @@ PUBLIER = {
     'complement_demande': True,          # références demandées par la cliente pour la fiche (complements_regles.py)
     'complement_herite': True,           # duo / trio : compléments demandés sur ses pièces (décision du 29/10 : comme les matelas)
     'tour_de_lit': True,                 # lits : tour de lit associé dans PrestaShop, après le matelas et le drap (demande du 04/11)
+    'coup_de_coeur': True,               # produit coup de cœur en dernière ligne, en plus des 3 (demande du 19/11)
 }
+CC = 'cc'                                 # 3e élément de la ligne coup de cœur
 MATELAS_LIT_DEMANDES = {2274, 11}         # Confort Baby 120x60 et 140x70
 MATELAS_LIT_JUNIOR = {9, 8}               # Montana 90x190 et 90x200
 # Matelas à langer par défaut (aucun relié dans PrestaShop) : « les unis, EC, SA, TB » (réponse du 02/11). Le 1er (uni
@@ -259,7 +266,48 @@ def refs_inconnues():
         for ref in refs:
             if not ref_id(ref):
                 out.setdefault(str(ref).strip().upper(), []).append(ref_id(src) or src)
+    for src, ref in list(COUPS_DE_COEUR_PAR_REF.items()) + [('duos et trios', COUP_DE_COEUR_DUO_TRIO),
+            ('lits 120x60 / 140x70', COUP_DE_COEUR_LIT_120_140), ('autres lits', COUP_DE_COEUR_AUTRES_LITS)] + \
+            [(f'lits {f} {c or ""}'.strip(), r) for (f, c), r in COUPS_DE_COEUR_LITS]:
+        if not ref_id(ref):
+            out.setdefault(str(ref).strip().upper(), []).append(ref_id(src) or src)
     return out
+
+
+def coup_de_coeur(pid):
+    """Référence du produit coup de cœur de la fiche, ou None : par référence de la fiche (COUPS_DE_COEUR_PAR_REF), sinon
+    duo / trio, sinon lit (par collection, puis lits 120x60 / 140x70, puis autres lits). Berceaux, commodes… : aucun."""
+    ref = COUPS_DE_COEUR_PAR_REF.get(ref_de(pid))
+    if ref:
+        return ref
+    t = MAT.get(str(pid), {}).get('type') or items.get(pid, {}).get('comp')
+    if t in ('duo', 'trio', 'duo_armoire'):
+        return COUP_DE_COEUR_DUO_TRIO
+    if t != 'lit':
+        return None
+    it = items.get(pid, {})
+    for (fam, coul), r in COUPS_DE_COEUR_LITS:
+        if it.get('fam') == fam and (coul is None or norm(it.get('c') or '') == norm(coul)):
+            return r
+    # taille du titre, sinon celle du matelas de lit retenu par matelas.py (lits combinés sans taille dans le titre :
+    # « Lit combine évolutif Antonin », fiche « Taille et modèle : 60x120 »)
+    tailles = set(it.get('sizes') or [])
+    for l in MAT.get(str(pid), {}).get('lignes') or []:
+        if l.get('role') == 'matelas_lit':
+            tailles |= set(items.get(l.get('id'), {}).get('sizes') or [])
+    if any(re.fullmatch(r'(120x60|60x120|140x70|70x140)', str(x)) for x in tailles):
+        return COUP_DE_COEUR_LIT_120_140
+    return COUP_DE_COEUR_AUTRES_LITS
+
+
+def ligne_coup_de_coeur(pid):
+    """[id, 'co', 'cc'] ou None : produit du catalogue, différent de la fiche."""
+    if not PUBLIER['coup_de_coeur']:
+        return None
+    cid = ref_id(coup_de_coeur(pid) or '')
+    if not cid or cid == pid or cid not in items:
+        return None
+    return [cid, 'co', CC]
 
 
 def categorie(pid, cid, origine, ligne_matelas=None):
@@ -361,7 +409,8 @@ def lignes(pid, proposition=False):
     attente de validation). Matelas à langer par défaut publié : le drap housse uni du même coloris (origine « uni ») le
     suit si une place est restée libre."""
     pub, a_valider, vus = [], [], set()
-    cands = candidates(pid, proposition)
+    cc = ligne_coup_de_coeur(pid)
+    cands = [c for c in candidates(pid, proposition) if not (cc and c[0] == cc[0])]   # coup de cœur : dernière ligne
     for c in cands:
         if PUBLIER[c[3]] and c[0] not in vus:
             pub.append(c); vus.add(c[0])
@@ -387,7 +436,12 @@ def dependances(pid):
 
 def liste_publiee(pid):
     """(liste [[id, rôle]], source) : 'calcul', 'veille' (page illisible, liste de la veille gardée), 'sans_pages'
-    (page illisible sans veille : plan et compléments seulement) ou 'vide'."""
+    (page illisible sans veille : plan et compléments seulement) ou 'vide'. Le coup de cœur de la fiche (règles, sans
+    lecture de page) est ajouté en dernière ligne dans tous les cas."""
+    cc = ligne_coup_de_coeur(pid)
+
+    def avec_cc(lst):
+        return lst + [cc] if cc and cc[0] not in {x[0] for x in lst} else lst
     illisible = DEGRADE or bool(dependances(pid) & EN_ERREUR)
     if illisible and str(pid) in VEILLE:
         # liste de la veille, mais le plan à langer suit toujours « map » du jour (lu dans le flux, pas sur la page) :
@@ -395,15 +449,18 @@ def liste_publiee(pid):
         plan = PC['map'].get(str(pid))
         garde = ([[int(plan), 'pl']] if plan and PUBLIER['plan'] else []) + \
             [[x[0], x[1]] for x in VEILLE[str(pid)] if isinstance(x, list) and len(x) >= 2 and x[0] in items
-             and x[0] != pid and x[1] in ROLES and x[1] != 'pl' and not (plan and x[0] == int(plan))]
+             and x[0] != pid and x[1] in ROLES and x[1] != 'pl' and not (plan and x[0] == int(plan))
+             and x[2:] != [CC] and not (cc and x[0] == cc[0])]
         garde = garde[:MAX_LIGNES]
         if garde:
-            return garde, 'veille'
+            return avec_cc(garde), 'veille'
     pub, coupees, _ = lignes(pid)
     if illisible:      # matelas calculés sur une page vide : pas fiables (taille « à corriger » perdue…), on les retire
         pub = [c for c in pub + coupees if c[2] not in ('matelas', 'uni')][:MAX_LIGNES]
-        return [[i, r] for i, r, _, _ in pub], ('sans_pages' if pub else 'vide')
-    return [[i, r] for i, r, _, _ in pub], ('calcul' if pub else 'vide')
+        lst = avec_cc([[i, r] for i, r, _, _ in pub])
+        return lst, ('sans_pages' if lst else 'vide')
+    lst = avec_cc([[i, r] for i, r, _, _ in pub])
+    return lst, ('calcul' if lst else 'vide')
 
 
 if __name__ == '__main__':
@@ -427,7 +484,8 @@ if __name__ == '__main__':
         a_valider.update(c[3] for c in av)
     statut = {
         'fiches': len(publie), 'lignes': sum(len(v) for v in publie.values()),
-        'roles': dict(collections.Counter(r for v in publie.values() for _, r in v)),
+        'roles': dict(collections.Counter(x[1] for v in publie.values() for x in v)),
+        'coups_de_coeur': sum(1 for v in publie.values() if v and v[-1][2:] == [CC]),
         'publiees_par_regle': dict(publiees), 'a_valider_par_regle': dict(a_valider),
         'fiches_illisibles': sorted(EN_ERREUR), 'pages_vides': PAGES_VIDES, 'lecture_degradee': DEGRADE,
         'listes_de_la_veille': sources['veille'], 'listes_sans_pages': sources['sans_pages'],
