@@ -27,6 +27,7 @@ import hashlib, json, os, re
 exec(open('regroupement.py').read().split("if __name__")[0])
 from pour_completer_regles import A_VALIDER
 from complements_regles import COMPLEMENTS, COMPLEMENTS_PAR_REF, COMPLEMENTS_MOTIFS, HOUSSES_LIT_COMBINE
+from complements_regles import COLLECTIONS_NUMEROTATION_LIBRE, GIGOTEUSE_SANS_LAYETTE
 from complements_regles import (COUPS_DE_COEUR_PAR_REF, COUP_DE_COEUR_DUO_TRIO, COUPS_DE_COEUR_LITS,
                                 COUP_DE_COEUR_LIT_120_140, COUP_DE_COEUR_AUTRES_LITS, COMPLEMENTS_LITS_JUNIOR,
                                 COUP_DE_COEUR_LITS_JUNIOR)
@@ -222,19 +223,53 @@ def layette_gigoteuse(pid):
     if not (re.search(r'\b(gigoteuses?|douillettes?)\b', t) and re.search(r'\bnaissance\b|\b0\s*-\s*6\s*m', t)):
         return []
     p = ref[:2] if re.fullmatch(r'[A-Z0-9]{2}[A-Z]{2}\d+', ref) else PREFIXE_COLLECTION.get(norm(FEED[pid]['col']), '')
+    if p in COLLECTIONS_NUMEROTATION_LIBRE:      # Emmy, Petit Écossais : ni pyjama ni bodies (20/11)
+        return [r for r in (cible_collection(p + c, ref) for c in GIGOTEUSE_SANS_LAYETTE) if r]
     return [c for c in (p + 'PY2', p + 'BD2') if p and ref_id(c)]
+
+
+# Collections à numérotation libre (COLLECTIONS_NUMEROTATION_LIBRE : Emmy, Petit Écossais, 20/11/2026) : les règles par
+# motif y lisent la fiche comme l'article habituel de son type, et leurs cibles y désignent l'article de ce type de la
+# collection (même numéro que la fiche d'abord, sinon le plus petit).
+def ref_habituelle(pid):
+    """Référence lue par les règles par motif : celle de la fiche ; dans une collection à numérotation libre, le n° 1 de
+    son type (SVNA5 -> SVNA1), n° 3 pour la gigoteuse 6-24 mois (xxDO3 des autres collections)."""
+    ref = ref_de(pid)
+    m = re.fullmatch(r'([A-Z0-9]{2})([A-Z]{2})\d+', ref)
+    if not m or m.group(1) not in COLLECTIONS_NUMEROTATION_LIBRE:
+        return ref
+    if m.group(2) == 'DO' and re.search(r'\b6\s*-\s*24\s*m', title_of(FEED[pid]['t'])):
+        return m.group(1) + 'DO3'
+    return m.group(1) + m.group(2) + '1'
+
+
+def cible_collection(cible, source, deja=()):
+    """Référence proposée pour la cible d'une règle par motif (None si absente) : la cible elle-même, ou, dans une
+    collection à numérotation libre, l'article de son type (même numéro que la fiche source d'abord, sinon le plus petit
+    numéro), ni la fiche ni une référence déjà proposée (deja : xxTT1 et xxTT2 -> deux trousses différentes)."""
+    m = re.fullmatch(r'([A-Z0-9]{2})([A-Z]{2})\d+', cible)
+    if not m or m.group(1) not in COLLECTIONS_NUMEROTATION_LIBRE:
+        return cible if ref_id(cible) else None
+    n = re.fullmatch(r'[A-Z0-9]{4}(\d+)', source)
+    refs = sorted((r for r in PAR_REF if re.fullmatch(re.escape(m.group(1) + m.group(2)) + r'\d+', r) and r != source
+                   and r not in deja and PAR_REF[r] in items),
+                  key=lambda r: (not n or r[4:] != n.group(1), int(r[4:])))
+    return refs[0] if refs else None
 
 
 def demandes(pid):
     """Références demandées pour une fiche, dans l'ordre : par id (COMPLEMENTS), housses des lits combinés, par référence
     de la fiche (COMPLEMENTS_PAR_REF, layette), puis règles par motif de référence (COMPLEMENTS_MOTIFS, cibles absentes
-    ignorées)."""
+    ignorées ; collections à numérotation libre : ref_habituelle, cible_collection)."""
     out = list(COMPLEMENTS.get(pid, [])) + housses_lit_combine(pid) + list(COMPLEMENTS_PAR_REF.get(ref_de(pid), [])) + \
         LAYETTE.get(ref_de(pid), []) + layette_gigoteuse(pid)
     for motif, cibles in COMPLEMENTS_MOTIFS:
-        m = re.fullmatch(motif, ref_de(pid))
+        m = re.fullmatch(motif, ref_habituelle(pid))
         if m:
-            out += [c.format(p=m.group(1)) for c in cibles if ref_id(c.format(p=m.group(1)))]
+            for c in cibles:
+                r = cible_collection(c.format(p=m.group(1)), ref_de(pid), out)
+                if r:
+                    out.append(r)
     return list(dict.fromkeys(str(r).strip().upper() for r in out))
 
 
@@ -377,7 +412,8 @@ def candidates(pid, proposition=False):
 
 # Lits (demande du 04/11/2026) : « en plus du matelas et du drap housse, le tour de lit associé dans PrestaShop ». Ordre :
 # matelas (et matelas à langer d'un lit combiné), 1er drap housse, tour de lit (celui demandé par la cliente, sinon le 1er
-# tour de lit relié à la fiche dans PrestaShop, « Produits associés »), puis les autres compléments.
+# tour de lit relié à la fiche dans PrestaShop, « Produits associés »), puis les autres compléments. Le tour de lit relié
+# dans PrestaShop passe en dernier quand il ferait sortir un complément demandé des 3 lignes (20/11).
 def est_tour_de_lit(cid):
     return cid in FEED and bool(re.search(r'\btour de lit\b', title_of(FEED[cid]['t'])))
 
@@ -405,7 +441,15 @@ def ordre_lit(pid, out):
         if x and x != pid and x not in {c[0] for c in out}:
             tl = [(x, role_titre(x), 'associé', 'tour_de_lit')]
     dr = [c for c in reste if c[1] == 'dr' and c not in tl][:1]
-    return base + dr + tl + [c for c in reste if c not in tl and c not in dr]
+    out = base + dr + tl + [c for c in reste if c not in tl and c not in dr]
+    # le tour de lit relié dans PrestaShop ne prend pas la place d'un complément demandé par la cliente (20/11 : HK111,
+    # drap housse et protections de barreaux demandés) : il passe en dernier s'il ferait sortir une demande des 3 lignes.
+    # Un 2e drap housse demandé reste, lui, après le tour de lit (règle du 04/11 : matelas, 1er drap, tour de lit).
+    publiees = [c for c in out if PUBLIER[c[3]]]
+    if tl and tl[0][2] == 'associé' and tl[0] in publiees[:MAX_LIGNES] and \
+            any(c[2] == 'demandé' and c[1] != 'dr' for c in publiees[MAX_LIGNES:]):
+        out = [c for c in out if c != tl[0]] + tl
+    return out
 
 
 def defaut_langer(pid, cid):

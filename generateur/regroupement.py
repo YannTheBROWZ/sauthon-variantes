@@ -366,6 +366,17 @@ for refs_, com_ in ((('68152', '68154', '68155', '68156'), 'Berceaux ovales Galo
     if len(ids_) >= 2:
         MERGES.append((ids_, com_))
 
+# Collections textiles Emmy (SC) et Petit Écossais (SV), nouveautés de novembre (demande du 20/11/2026) : gigoteuses en
+# variantes de taille, comme dans les autres collections. Collection vide dans le flux, et motif différent d'une taille à
+# l'autre (Emmy : rose fleur, carreaux rose en 6-24 mois) : regroupement par référence, sélecteur « Taille » seul (une
+# gigoteuse par taille).
+for p_, nom_ in (('SC', 'Emmy'), ('SV', 'Petit Écossais')):
+    gig_ = [k for k in sorted(REF_ID) if re.fullmatch(p_ + r'D[NO]\d+', k) and 'gigoteuse' in norm(_ROW[k]['t'])]
+    if len(gig_) >= 2:
+        MERGES.append(([REF_ID[k] for k in gig_], f'Gigoteuses {nom_} : naissance, 0-6 mois, 6-24 mois (demande du 20/11/2026)'))
+        for k in gig_:
+            _set(REF_ID[k], c=None)
+
 if 'XCPY3' in REF_ID and 'rosetaille' in norm(_ROW['XCPY3']['t']):
     _set(REF_ID['XCPY3'], c='Rose')      # titre « Pyjama velours Rosetaille 3 mois » (espace manquant)
 

@@ -100,6 +100,12 @@ COMPLEMENTS_PAR_REF = {
                                    # tour de lit Orsino
     'CC111': ['WVCM1', 'WVPB1'],   # lit décor vanille 140x70 : couvre-lit et protections de barreaux Orsino
     'EW101': ['WVPB1'],            # lit combiné Paloma : protections de barreaux Orsino, après la housse WVHM5
+    # 2e message du 20/11, lits (le tour de lit relié dans PrestaShop ne prend pas la place d'un complément demandé :
+    # encart.ordre_lit)
+    'HK111': ['SADR5', 'PRPB2'],   # lit Eléonore Kaki 140x70 : demandé « SADR1 », absent : SADR5, le drap housse uni Sauge ;
+                                   # puis protections de barreaux Tilleul Promenons-nous
+    'MH111': ['ESPB1', 'TBPB1'],   # lit Mélinée 140x70 : protections de barreaux Esmée et uni Terracotta
+    'XV111': ['TBDR5', 'WVPB1'],   # lit Tokyo 140x70 : demandé « TBDR1 », absent : TBDR5 (comme HO111) ; protections Orsino
 }
 # Lits combinés dont le matelas à langer est fourni (réponse du 02/11 : matelas à langer « sauf EW101 et BJ101 », « ajouter
 # housse de matelas à langer EC, WV, SA, TB ») : pas de matelas à langer, mais les housses de matelas à langer (références
@@ -128,12 +134,25 @@ COMPLEMENTS_MOTIFS = [
     (r'(?!BW|XC|QJ)(..)TL[12]', ['{p}CM1', '{p}DR1']),
     (r'(BW|XC|QJ)TL[12]', ['{p}ED1', '{p}ED2', '{p}DO1']),
 ]
+# Collections textiles Emmy (SC) et Petit Écossais (SV), nouveautés de novembre (demande du 20/11/2026 : « reprendre les
+# mêmes associations au sein de la collection que pour les autres collections textiles ») : leurs références ne suivent
+# pas la numérotation des autres (SVNA5, SVCV4, SCSL2…). Pour les règles par motif ci-dessus, une fiche y est lue comme
+# l'article habituel de son type (SVNA5 comme xxNA1 ; gigoteuse 6-24 mois, reconnue à son titre, comme xxDO3), et une
+# cible xxTTn y désigne un article de ce type de la collection : celui qui a le même numéro que la fiche d'abord (même
+# motif : nid d'ange SVNA5 sherpa / carreaux caramel -> couverture SVCV5 carreaux caramel), sinon le plus petit numéro.
+COLLECTIONS_NUMEROTATION_LIBRE = ['SC', 'SV']
+# Pas de pyjama ni de bodies dans ces deux collections : leurs gigoteuses naissance et 0-6 mois proposent un doudou
+# mouchoir et la spirale d'activités au lieu du pyjama et des bodies 1 mois (« DM1 et SL1 », 20/11). Emmy : doudou
+# mouchoir rose fleur SCDM1, assorti aux gigoteuses ; Petit Écossais : SVDM4 (plus petit numéro, ours sherpa).
+GIGOTEUSE_SANS_LAYETTE = ['DM1', 'SL1']
 
 # Coups de cœur (demande du 19/11/2026) : un produit par fiche, en DERNIÈRE ligne de l'encart, en plus de ses 3 lignes, avec
 # l'étiquette « Coup de ♥ » (balise 2026-11-19 et suivantes ; les précédentes l'affichent comme un complément ordinaire,
 # dans la limite de leurs 3 lignes). Règle par référence de la fiche d'abord, puis par type de fiche (encart.coup_de_coeur).
 COUPS_DE_COEUR_PAR_REF = {
     'CC111': 'WVMM2',     # 20/11 : « remplacer le mobile coup de cœur par le WVMM2 » (lit décor vanille 140x70)
+    'HK111': 'PRMM1',     # 20/11 : « remplacer le mobile par le PRMM1 » (lit Eléonore Kaki 140x70), mobile Promenons-nous
+    'MH111': 'FJMM2',     # 20/11 : « mobile FJMM2 » (lit Mélinée 140x70), mobile Petit Coeur
     **{r: 'SJMM1' for r in ('DU219', 'TR046')},   # Solène duo et trio (demandé « DU219 et TR045 » : TR045 est le trio Choco)
     **{r: 'BWMM1' for r in ('DU216', 'DU217')},   # New York duo 120x60 et commode + dispositif
     'RLDN1': 'RLCV1',     # gigoteuse naissance Léopard : couverture velours côtelé et sherpa
