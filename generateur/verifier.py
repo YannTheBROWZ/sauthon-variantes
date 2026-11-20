@@ -101,14 +101,18 @@ if pc is not None:
         errors.append(f'Pour compléter : identifiants hors format : {bad[:10]}')
     if len(json.dumps(pc, ensure_ascii=False, separators=(',', ':'))) > MAX_CARACTERES_PC:
         errors.append(f'pour-completer.json dépasserait {MAX_CARACTERES_PC} caractères (refusé par la balise).')
-    # lignes de l'encart (encart.py) : [[id produit, rôle], ...] par fiche, MAX_LIGNES_ENCART au plus, plus une dernière
-    # ligne [id, rôle, 'cc'] (coup de cœur)
+    # lignes de l'encart (encart.py) : [[id produit, rôle], ...] par fiche, MAX_LIGNES_ENCART au plus (une de plus quand
+    # la liste commence par un plan à langer : duos et trios, 20/11), plus une dernière ligne [id, rôle, 'cc'] (coup de cœur)
     lignes = pc.get('l')
     if lignes is not None:
         def avec_cc(v):
             return bool(v) and isinstance(v[-1], list) and len(v[-1]) == 3
+
+        def plan_en_tete(v):
+            return bool(v) and isinstance(v[0], list) and len(v[0]) == 2 and v[0][1] == 'pl'
         mal = [k for k, v in lignes.items() if not (
-            re.fullmatch(r'\d{1,7}', k) and isinstance(v, list) and 1 <= len(v) <= MAX_LIGNES_ENCART + avec_cc(v)
+            re.fullmatch(r'\d{1,7}', k) and isinstance(v, list)
+            and 1 <= len(v) <= MAX_LIGNES_ENCART + avec_cc(v) + plan_en_tete(v)
             and all(isinstance(x, list) and (len(x) == 2 or (len(x) == 3 and x[2] == CC_ENCART and i == len(v) - 1))
                     and est_id(x[0]) and x[1] in ROLES_ENCART and str(x[0]) != k for i, x in enumerate(v))
             and len({x[0] for x in v}) == len(v))]

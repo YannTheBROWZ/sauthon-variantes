@@ -2,7 +2,8 @@
 tableau de validation) : draps housse, housses de matelas à langer, panières… par référence produit PrestaShop.
 
 Ils s'ajoutent après le plan à langer et les matelas, dans l'ordre donné, dans la limite de 3 lignes au total.
-Les duos et trios reçoivent aussi les compléments de leurs pièces (décision du 29/10/2026).
+Les duos et trios reçoivent aussi les compléments de leurs pièces (décision du 29/10/2026) : d'abord ceux de l'encart de
+leur lit, dans son ordre (20/11/2026), sans compter leur plan à langer dans les 3 lignes (encart.max_lignes).
 Publiés dans « l » (encart.py) et affichés par le tag « Pour compléter » à partir de sa version 2026-10-30.
 """
 
@@ -91,8 +92,8 @@ COMPLEMENTS_PAR_REF = {
     'WVDN1': ['WVCV1'],   # gigoteuse naissance Orsino : couverture Orsino
     # demandes du 20/11, lits : entre le matelas (et le drap housse) et le coup de cœur. Ordre des lits (encart.ordre_lit) :
     # matelas, 1er drap housse, tour de lit, puis le reste, 3 lignes au plus
-    'MO111': ['WVTL1', 'WVPB1'],   # lit Mokka 140x70 : demandé « drap housse WVTL1 », qui est le tour de lit Orsino ;
-                                   # protections de barreaux Orsino
+    'MO111': ['WVTL1', 'WVPB1'],   # lit Mokka 140x70 : demandé « drap housse WVTL1 », qui est le tour de lit Orsino
+                                   # (gardé, 20/11 au soir) ; protections de barreaux Orsino
     'LV111': ['RLDH1', 'RLPB1'],   # lit My Love 70x140 : demandé « RLDR1 », absent : RLDH1, le drap housse Léopard
                                    # (comme pour les lits Access le 29/10) ; protections de barreaux Léopard
     **{r: ['ESTL1'] for r in ('1J111', '1J031')},   # lits Arty 140x70 et 120x60 : tour de lit Esmée après le drap ECDR5
@@ -159,7 +160,8 @@ COUPS_DE_COEUR_PAR_REF = {
     'RLDO1': 'RLCV3',     # gigoteuse hiver Léopard : demandé « RLCV2 », absente du catalogue ; RLCV3, la couverture en gaze
     'WVDN1': 'RLCV1',     # gigoteuse naissance Orsino : couverture Léopard
 }
-COUP_DE_COEUR_DUO_TRIO = 'WVNA2'          # duos et trios (nid d'ange hiver Orsino)
+COUP_DE_COEUR_DUO_TRIO = 'WVNA2'          # duos et trios (nid d'ange hiver Orsino, confirmé le 20/11 : « le coup de cœur du
+                                          # moment ») ; leurs autres lignes reprennent l'encart de leur lit (encart.base_du_lit)
 # lits seuls, par collection : (famille de regroupement.py, coloris ou None) -> référence
 COUPS_DE_COEUR_LITS = [
     (('ARTY', None), 'ESMM1'), (('SERENA', None), 'ESMM1'), (('ACCESS', 'Bois blanc'), 'ESMM1'),   # mobile Esmée
@@ -170,6 +172,8 @@ COUP_DE_COEUR_AUTRES_LITS = 'WVMM2'       # autres lits (100x50…) : mobile Ors
 # Lits junior 90x190 / 90x200 (demande du 20/11 : « enlever les mobiles musicaux en coup de cœur pour les lits juniors
 # 90x190 » et les remplacer par « deux lignes de coussins SJCS1 et SJCS2 ») : coussin carré Sunlight en ligne normale,
 # après le matelas et le sommier, puis coussin arc-en-ciel en coup de cœur (une seule ligne coup de cœur par fiche).
-# Lit junior = lit dont matelas.py retient le matelas Montana 90x190 ou 90x200 (encart.est_lit_junior).
+# Lit junior = lit dont matelas.py retient le matelas Montana 90x190 ou 90x200 (encart.est_lit_junior). Même règle pour
+# les lits au sol 70x140 Tokyo XV221 et Arty 1J221 (20/11 : « pour les lits au sol on enlève le mobile et on ajoute les
+# coussins comme pour le junior » ; encart.est_lit_au_sol, « lit au sol » dans le titre).
 COMPLEMENTS_LITS_JUNIOR = ['SJCS1']
 COUP_DE_COEUR_LITS_JUNIOR = 'SJCS2'

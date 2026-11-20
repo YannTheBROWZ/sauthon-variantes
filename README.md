@@ -32,7 +32,9 @@ xxPY2 / xxBD2 sur les gigoteuses naissance et 0-6 mois ; balle xxBA1, cube xxCU1
 xxLI1 et cube sur le tapis d'éveil xxTS1 ; housse de couette xxHC1 et peluche xxDD1 sur la gigoteuse ouatinée
 6-24 mois xxDO3 ; sur un lit, le tour de lit relié dans PrestaShop après le matelas et le 1er drap, `ordre_lit` ;
 sur un tour de lit xxTL1 / xxTL2, couvre-lit xxCM1 et draps xxDR1, ou édredons xxED1 / xxED2 et gigoteuse xxDO1 pour
-BW, XC, QJ, et LXED5 / LXED6 / LXDO5 pour LXTL5),
+BW, XC, QJ, et LXED5 / LXED6 / LXDO5 pour LXTL5 ; sur un duo ou un trio, les compléments de l'encart de son lit, et
+son plan à langer en plus des 3 lignes : souvent offert avec le pack, il est alors masqué par le tag, qui affiche les
+3 lignes suivantes ; sur les lits junior et les lits au sol, coussins Sunlight au lieu du mobile),
 assemblés par
 `generateur/encart.py`
 (liste « l » du fichier publié). **Seules les règles validées par Sauthon sont publiées** (`PUBLIER` dans

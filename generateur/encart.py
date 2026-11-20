@@ -1,7 +1,9 @@
 """Lignes de l'encart « Pour compléter », fiche par fiche : plan à langer, matelas (matelas.py), puis compléments
 demandés par Sauthon (complements_regles.py, par référence PrestaShop ; règles de la cliente par référence : layette de
-même taille, housses des lits combinés ; les duos et trios peuvent aussi recevoir ceux de leurs pièces), dans cet ordre et
-sans doublon, MAX_LIGNES au plus ; un matelas à langer par défaut est suivi des autres unis s'il reste de la place.
+même taille, housses des lits combinés ; les duos et trios reçoivent aussi ceux de l'encart de leur lit, puis ceux de
+leurs pièces), dans cet ordre et sans doublon, MAX_LIGNES au plus (plus le plan à langer d'un duo ou d'un trio, souvent
+offert et alors masqué par le tag : max_lignes) ; un matelas à langer par défaut est suivi du drap housse uni du même
+coloris s'il reste de la place.
 Ajoute « l » et « r » à pc_data.json et écrit
 encart_status.json (comptes, références introuvables, fiches illisibles) repris par verifier.py dans status.json.
 
@@ -10,6 +12,8 @@ Seules les lignes dont la règle est validée sont publiées (PUBLIER) ; les aut
 
 Format publié (lu par le tag GTM, version 2026-10-30 et suivantes ; les versions précédentes ne lisent que « map ») :
   "l": {"<fiche>": [[<id produit>, "<rôle>"], ...]}
+  Duo ou trio dont la liste commence par son plan à langer : 4 lignes (20/11/2026). Le tag n'en affiche que 3, sans
+  compter les rôles qu'il masque (produit offert d'après le titre de la fiche) : il lit la liste dans l'ordre.
   Coup de cœur (demande du 19/11/2026) : au plus une ligne [<id>, "co", "cc"], toujours la dernière, en plus des
   MAX_LIGNES lignes ; le tag 2026-11-19 l'affiche avec l'étiquette « Coup de ♥ », les précédents comme un complément
   ordinaire (3e élément ignoré, dans la limite de leurs 3 lignes).
@@ -274,14 +278,19 @@ def demandes(pid):
 
 
 def complements_de(pid):
-    """[(id produit, origine)] : demandés pour la fiche (origine « demandé »), puis, pour un duo ou un trio, ceux de ses
-    pièces (origine = id de la pièce), sans doublon ; références absentes du flux ignorées (voir refs_inconnues())."""
+    """[(id produit, origine)] : demandés pour la fiche (origine « demandé »), puis, pour un duo ou un trio, les
+    compléments de l'encart de son lit (base_du_lit) et ceux demandés pour ses pièces (origine = id du lit ou de la
+    pièce), sans doublon ; références absentes du flux ignorées (voir refs_inconnues())."""
     out, vus = [], set()
-    for ref in demandes(pid) + (COMPLEMENTS_LITS_JUNIOR if est_lit_junior(pid) else []):   # coussin : la fiche seule
+    for ref in demandes(pid) + (COMPLEMENTS_LITS_JUNIOR if lit_sans_mobile(pid) else []):   # coussin : la fiche seule
         cid = ref_id(ref)
         if cid and cid not in vus and cid != pid:
             out.append((cid, 'demandé')); vus.add(cid)
     if pid in PACKS and pid in items and pack_type(pid) in ROOM_SETS:
+        lit = lit_du_pack(pid)
+        for cid in base_du_lit(lit) if lit else []:
+            if cid not in vus and cid != pid:
+                out.append((cid, lit)); vus.add(cid)
         for piece in PACKS[pid]:
             for ref in demandes(piece):
                 cid = ref_id(ref)
@@ -311,26 +320,64 @@ def refs_inconnues():
     return out
 
 
+def type_fiche(pid):
+    return MAT.get(str(pid), {}).get('type') or items.get(pid, {}).get('comp')
+
+
 def est_lit_junior(pid):
     """Lit junior (90x190 / 90x200) : matelas.py lui retient le matelas Montana 90x190 ou 90x200."""
-    m = MAT.get(str(pid), {})
-    return (m.get('type') or items.get(pid, {}).get('comp')) == 'lit' and \
-        any(l.get('role') == 'matelas_lit' and l.get('id') in MATELAS_LIT_JUNIOR for l in m.get('lignes') or [])
+    return type_fiche(pid) == 'lit' and \
+        any(l.get('role') == 'matelas_lit' and l.get('id') in MATELAS_LIT_JUNIOR for l in MAT.get(str(pid), {}).get('lignes') or [])
+
+
+def est_lit_au_sol(pid):
+    """Lit au sol (« Lit au sol jeune enfant 70x140cm – Type Montessori », Tokyo XV221 et Arty 1J221 le 20/11)."""
+    return type_fiche(pid) == 'lit' and pid in FEED and bool(re.search(r'\blit au sol\b', title_of(FEED[pid]['t'])))
+
+
+def lit_sans_mobile(pid):
+    """Lits junior et lits au sol (20/11) : pas de mobile en coup de cœur, mais les coussins Sunlight
+    (COMPLEMENTS_LITS_JUNIOR en ligne normale, COUP_DE_COEUR_LITS_JUNIOR en coup de cœur)."""
+    return est_lit_junior(pid) or est_lit_au_sol(pid)
+
+
+# Duos et trios (demande du 20/11/2026 : « partir de la base du lit de la collection, et garder le matelas à langer déjà
+# associé à ces duos et trios ; plus le coup de cœur du moment, le nid d'ange Orsino ») : après le plan à langer, les
+# matelas (matelas à langer compris) et les compléments demandés pour la fiche elle-même, les compléments de l'encart du
+# lit du pack, dans son ordre (drap housse, tour de lit, protections…), puis ceux demandés pour les autres pièces.
+def lit_du_pack(pid):
+    return next((x for x in PACKS.get(pid, []) if x in items and x != pid and type_fiche(x) == 'lit'), None)
+
+
+def base_du_lit(lit):
+    """Compléments publiés de l'encart du lit (demandés pour le lit, tour de lit relié dans PrestaShop), dans son ordre,
+    sans son matelas ni son coup de cœur."""
+    cc = ligne_coup_de_coeur(lit)
+    return [c[0] for c in candidates(lit) if c[2] in ('demandé', 'associé') and PUBLIER[c[3]] and not (cc and c[0] == cc[0])]
+
+
+def max_lignes(pid, lst):
+    """Lignes publiées au plus : MAX_LIGNES, plus le plan à langer quand il ouvre la liste d'un duo ou d'un trio
+    (20/11/2026). Ce plan est souvent offert avec le pack (« + plan à langer offert ! », Black November jusqu'au 01/12) :
+    la balise masque alors sa ligne (CONFIG.hideRoles) et affiche les 3 lignes suivantes (matelas, matelas à langer et
+    1er complément du lit). Plan non offert : la balise affiche ses 3 premières lignes, plan, matelas et matelas à
+    langer, comme avant."""
+    return MAX_LIGNES + (1 if lst and lst[0][1] == 'pl' and type_fiche(pid) in ROOM_SETS else 0)
 
 
 def coup_de_coeur(pid):
     """Référence du produit coup de cœur de la fiche, ou None : par référence de la fiche (COUPS_DE_COEUR_PAR_REF), sinon
-    duo / trio, sinon lit (lits junior, puis par collection, puis lits 120x60 / 140x70, puis autres lits). Berceaux,
-    commodes… : aucun."""
+    duo / trio, sinon lit (lits junior et lits au sol, puis par collection, puis lits 120x60 / 140x70, puis autres lits).
+    Berceaux, commodes… : aucun."""
     ref = COUPS_DE_COEUR_PAR_REF.get(ref_de(pid))
     if ref:
         return ref
-    t = MAT.get(str(pid), {}).get('type') or items.get(pid, {}).get('comp')
+    t = type_fiche(pid)
     if t in ('duo', 'trio', 'duo_armoire'):
         return COUP_DE_COEUR_DUO_TRIO
     if t != 'lit':
         return None
-    if est_lit_junior(pid):     # pas de mobile sur un lit junior (20/11) : coussin
+    if lit_sans_mobile(pid):     # pas de mobile sur un lit junior ni sur un lit au sol (20/11) : coussin
         return COUP_DE_COEUR_LITS_JUNIOR
     it = items.get(pid, {})
     for (fam, coul), r in COUPS_DE_COEUR_LITS:
@@ -460,10 +507,10 @@ def defaut_langer(pid, cid):
 
 def lignes(pid, proposition=False):
     """(publiées, coupées, à valider), listes de (id produit, rôle, origine, catégorie) sans doublon d'un produit :
-    publiées = ce que le site affiche (règles PUBLIER), MAX_LIGNES au plus ; coupées = publiables mais au-delà de
-    MAX_LIGNES ; à valider = propositions dont la règle n'est pas encore validée (proposition=True : avec le plan en
-    attente de validation). Matelas à langer par défaut publié : le drap housse uni du même coloris (origine « uni ») le
-    suit si une place est restée libre."""
+    publiées = ce que le site affiche (règles PUBLIER), max_lignes() au plus (MAX_LIGNES, plus le plan à langer d'un duo
+    ou d'un trio) ; coupées = publiables mais au-delà ; à valider = propositions dont la règle n'est pas encore validée
+    (proposition=True : avec le plan en attente de validation). Matelas à langer par défaut publié : le drap housse uni
+    du même coloris (origine « uni ») le suit si une place est restée libre."""
     pub, a_valider, vus = [], [], set()
     cc = ligne_coup_de_coeur(pid)
     cands = [c for c in candidates(pid, proposition) if not (cc and c[0] == cc[0])]   # coup de cœur : dernière ligne
@@ -473,10 +520,11 @@ def lignes(pid, proposition=False):
     for c in cands:
         if not PUBLIER[c[3]] and c[0] not in vus:
             a_valider.append(c); vus.add(c[0])
-    pub, coupees = pub[:MAX_LIGNES], pub[MAX_LIGNES:]
+    n = max_lignes(pid, pub)
+    pub, coupees = pub[:n], pub[n:]
     k = next((i for i, c in enumerate(pub) if c[2] == 'matelas' and c[1] == 'ma' and defaut_langer(pid, c[0])), None)
     avec_lit = any(c[1] == 'ml' for c in pub + coupees) or items.get(pid, {}).get('comp') in ('lit', 'duo', 'duo_armoire', 'trio')
-    if k is not None and len(pub) < MAX_LIGNES and avec_lit:     # drap seulement s'il y a un lit (demande du 04/11)
+    if k is not None and len(pub) < n and avec_lit:     # drap seulement s'il y a un lit (demande du 04/11)
         drap = ref_id(DRAP_UNI.get(ref_de(pub[k][0]), ''))
         if drap in items and drap not in vus and drap != pid:
             pub = pub[:k + 1] + [(drap, 'dr', 'uni', pub[k][3])] + pub[k + 1:]
@@ -507,12 +555,13 @@ def liste_publiee(pid):
             [[x[0], x[1]] for x in VEILLE[str(pid)] if isinstance(x, list) and len(x) >= 2 and x[0] in items
              and x[0] != pid and x[1] in ROLES and x[1] != 'pl' and not (plan and x[0] == int(plan))
              and x[2:] != [CC] and not (cc and x[0] == cc[0])]
-        garde = garde[:MAX_LIGNES]
+        garde = garde[:max_lignes(pid, garde)]
         if garde:
             return avec_cc(garde), 'veille'
     pub, coupees, _ = lignes(pid)
     if illisible:      # matelas calculés sur une page vide : pas fiables (taille « à corriger » perdue…), on les retire
-        pub = [c for c in pub + coupees if c[2] not in ('matelas', 'uni')][:MAX_LIGNES]
+        pub = [c for c in pub + coupees if c[2] not in ('matelas', 'uni')]
+        pub = pub[:max_lignes(pid, pub)]
         lst = avec_cc([[i, r] for i, r, _, _ in pub])
         return lst, ('sans_pages' if lst else 'vide')
     lst = avec_cc([[i, r] for i, r, _, _ in pub])
