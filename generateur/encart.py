@@ -28,7 +28,8 @@ exec(open('regroupement.py').read().split("if __name__")[0])
 from pour_completer_regles import A_VALIDER
 from complements_regles import COMPLEMENTS, COMPLEMENTS_PAR_REF, COMPLEMENTS_MOTIFS, HOUSSES_LIT_COMBINE
 from complements_regles import (COUPS_DE_COEUR_PAR_REF, COUP_DE_COEUR_DUO_TRIO, COUPS_DE_COEUR_LITS,
-                                COUP_DE_COEUR_LIT_120_140, COUP_DE_COEUR_AUTRES_LITS)
+                                COUP_DE_COEUR_LIT_120_140, COUP_DE_COEUR_AUTRES_LITS, COMPLEMENTS_LITS_JUNIOR,
+                                COUP_DE_COEUR_LITS_JUNIOR)
 
 MAX_LIGNES = 3
 ROLES = ('pl', 'ml', 'ma', 'so', 'ho', 'dr', 'pa', 'co')
@@ -225,10 +226,10 @@ def layette_gigoteuse(pid):
 
 
 def demandes(pid):
-    """Références demandées pour une fiche, dans l'ordre : par id (COMPLEMENTS), par référence de la fiche
-    (COMPLEMENTS_PAR_REF, housses des lits combinés, layette), puis règles par motif de référence (COMPLEMENTS_MOTIFS,
-    cibles absentes ignorées)."""
-    out = list(COMPLEMENTS.get(pid, [])) + list(COMPLEMENTS_PAR_REF.get(ref_de(pid), [])) + housses_lit_combine(pid) + \
+    """Références demandées pour une fiche, dans l'ordre : par id (COMPLEMENTS), housses des lits combinés, par référence
+    de la fiche (COMPLEMENTS_PAR_REF, layette), puis règles par motif de référence (COMPLEMENTS_MOTIFS, cibles absentes
+    ignorées)."""
+    out = list(COMPLEMENTS.get(pid, [])) + housses_lit_combine(pid) + list(COMPLEMENTS_PAR_REF.get(ref_de(pid), [])) + \
         LAYETTE.get(ref_de(pid), []) + layette_gigoteuse(pid)
     for motif, cibles in COMPLEMENTS_MOTIFS:
         m = re.fullmatch(motif, ref_de(pid))
@@ -241,7 +242,7 @@ def complements_de(pid):
     """[(id produit, origine)] : demandés pour la fiche (origine « demandé »), puis, pour un duo ou un trio, ceux de ses
     pièces (origine = id de la pièce), sans doublon ; références absentes du flux ignorées (voir refs_inconnues())."""
     out, vus = [], set()
-    for ref in demandes(pid):
+    for ref in demandes(pid) + (COMPLEMENTS_LITS_JUNIOR if est_lit_junior(pid) else []):   # coussin : la fiche seule
         cid = ref_id(ref)
         if cid and cid not in vus and cid != pid:
             out.append((cid, 'demandé')); vus.add(cid)
@@ -267,16 +268,25 @@ def refs_inconnues():
             if not ref_id(ref):
                 out.setdefault(str(ref).strip().upper(), []).append(ref_id(src) or src)
     for src, ref in list(COUPS_DE_COEUR_PAR_REF.items()) + [('duos et trios', COUP_DE_COEUR_DUO_TRIO),
-            ('lits 120x60 / 140x70', COUP_DE_COEUR_LIT_120_140), ('autres lits', COUP_DE_COEUR_AUTRES_LITS)] + \
+            ('lits 120x60 / 140x70', COUP_DE_COEUR_LIT_120_140), ('autres lits', COUP_DE_COEUR_AUTRES_LITS),
+            ('lits junior', COUP_DE_COEUR_LITS_JUNIOR)] + [('lits junior', r) for r in COMPLEMENTS_LITS_JUNIOR] + \
             [(f'lits {f} {c or ""}'.strip(), r) for (f, c), r in COUPS_DE_COEUR_LITS]:
         if not ref_id(ref):
             out.setdefault(str(ref).strip().upper(), []).append(ref_id(src) or src)
     return out
 
 
+def est_lit_junior(pid):
+    """Lit junior (90x190 / 90x200) : matelas.py lui retient le matelas Montana 90x190 ou 90x200."""
+    m = MAT.get(str(pid), {})
+    return (m.get('type') or items.get(pid, {}).get('comp')) == 'lit' and \
+        any(l.get('role') == 'matelas_lit' and l.get('id') in MATELAS_LIT_JUNIOR for l in m.get('lignes') or [])
+
+
 def coup_de_coeur(pid):
     """Référence du produit coup de cœur de la fiche, ou None : par référence de la fiche (COUPS_DE_COEUR_PAR_REF), sinon
-    duo / trio, sinon lit (par collection, puis lits 120x60 / 140x70, puis autres lits). Berceaux, commodes… : aucun."""
+    duo / trio, sinon lit (lits junior, puis par collection, puis lits 120x60 / 140x70, puis autres lits). Berceaux,
+    commodes… : aucun."""
     ref = COUPS_DE_COEUR_PAR_REF.get(ref_de(pid))
     if ref:
         return ref
@@ -285,6 +295,8 @@ def coup_de_coeur(pid):
         return COUP_DE_COEUR_DUO_TRIO
     if t != 'lit':
         return None
+    if est_lit_junior(pid):     # pas de mobile sur un lit junior (20/11) : coussin
+        return COUP_DE_COEUR_LITS_JUNIOR
     it = items.get(pid, {})
     for (fam, coul), r in COUPS_DE_COEUR_LITS:
         if it.get('fam') == fam and (coul is None or norm(it.get('c') or '') == norm(coul)):

@@ -76,7 +76,9 @@ COMPLEMENTS_PAR_REF = {
     'DU111': ['XEML1', 'XEPB1'],   # duo lit chambre + armoire UP chêne silex : matelas à langer et protections Baby Sailor (04/11)
     'LXTL5': ['LXED5', 'LXED6', 'LXDO5'],   # tour de lit Lazare : édredons 120x60 / 140x70 et gigoteuse 0-6 mois (04/11)
     # demandes du 09/11 (encart sur toutes les langues ; 3 lignes au plus, lits : matelas, 1er drap, puis la demande)
-    'HO111': ['SCPB1', 'RLPB1', 'RLDH1'],   # lit Choco 140x70 : en plus du matelas ; RLPB1 ne rentre pas (4e ligne)
+    # lit Choco 140x70 : en plus du matelas ; RLPB1 ne rentre pas (4e ligne). 20/11 : « remplacer le drap housse par le
+    # TBDR1 », absent du catalogue : TBDR5, le drap housse uni Terracotta (le seul TBDR), à la place de RLDH1
+    'HO111': ['SCPB1', 'RLPB1', 'TBDR5'],
     'HO955': ['ECML1', 'SCML1'],   # dispositif Choco : SCML1 « en plus du matelas à langer proposé » (l'uni ECML1 gardé)
     'DU207': ['SCML1', 'RLML1'],   # commode + dispositif Choco : matelas à langer Emmy et Léopard
     'BD111': ['SVPB4', 'SVDN2'],   # lit Bohème : demandés « SVPB1 et SVDN1 », absents du catalogue ; protections et
@@ -87,6 +89,17 @@ COMPLEMENTS_PAR_REF = {
     'RLDN1': ['RLDO1'],   # gigoteuse naissance Léopard : gigoteuse hiver Léopard
     'RLDO1': ['RLTT1'],   # gigoteuse hiver Léopard : trousse de toilette Léopard
     'WVDN1': ['WVCV1'],   # gigoteuse naissance Orsino : couverture Orsino
+    # demandes du 20/11, lits : entre le matelas (et le drap housse) et le coup de cœur. Ordre des lits (encart.ordre_lit) :
+    # matelas, 1er drap housse, tour de lit, puis le reste, 3 lignes au plus
+    'MO111': ['WVTL1', 'WVPB1'],   # lit Mokka 140x70 : demandé « drap housse WVTL1 », qui est le tour de lit Orsino ;
+                                   # protections de barreaux Orsino
+    'LV111': ['RLDH1', 'RLPB1'],   # lit My Love 70x140 : demandé « RLDR1 », absent : RLDH1, le drap housse Léopard
+                                   # (comme pour les lits Access le 29/10) ; protections de barreaux Léopard
+    **{r: ['ESTL1'] for r in ('1J111', '1J031')},   # lits Arty 140x70 et 120x60 : tour de lit Esmée après le drap ECDR5
+    'PK152': ['ECDR5', 'WVTL1'],   # lit Opaline 70x140 : demandé « ECDR1 », absent : ECDR5, drap housse uni Vanilla ;
+                                   # tour de lit Orsino
+    'CC111': ['WVCM1', 'WVPB1'],   # lit décor vanille 140x70 : couvre-lit et protections de barreaux Orsino
+    'EW101': ['WVPB1'],            # lit combiné Paloma : protections de barreaux Orsino, après la housse WVHM5
 }
 # Lits combinés dont le matelas à langer est fourni (réponse du 02/11 : matelas à langer « sauf EW101 et BJ101 », « ajouter
 # housse de matelas à langer EC, WV, SA, TB ») : pas de matelas à langer, mais les housses de matelas à langer (références
@@ -120,6 +133,7 @@ COMPLEMENTS_MOTIFS = [
 # l'étiquette « Coup de ♥ » (balise 2026-11-19 et suivantes ; les précédentes l'affichent comme un complément ordinaire,
 # dans la limite de leurs 3 lignes). Règle par référence de la fiche d'abord, puis par type de fiche (encart.coup_de_coeur).
 COUPS_DE_COEUR_PAR_REF = {
+    'CC111': 'WVMM2',     # 20/11 : « remplacer le mobile coup de cœur par le WVMM2 » (lit décor vanille 140x70)
     **{r: 'SJMM1' for r in ('DU219', 'TR046')},   # Solène duo et trio (demandé « DU219 et TR045 » : TR045 est le trio Choco)
     **{r: 'BWMM1' for r in ('DU216', 'DU217')},   # New York duo 120x60 et commode + dispositif
     'RLDN1': 'RLCV1',     # gigoteuse naissance Léopard : couverture velours côtelé et sherpa
@@ -133,4 +147,10 @@ COUPS_DE_COEUR_LITS = [
     (('ACCESS', 'Bois'), 'PRMM1'), (('AZUR', None), 'PRMM1'),                                     # mobile Promenons-nous
 ]
 COUP_DE_COEUR_LIT_120_140 = 'RLMM3'       # autres lits 120x60 / 140x70 : demandé « RLMM2 », absent ; RLMM3, mobile Léopard
-COUP_DE_COEUR_AUTRES_LITS = 'WVMM2'       # autres lits (junior, 100x50…) : mobile Orsino
+COUP_DE_COEUR_AUTRES_LITS = 'WVMM2'       # autres lits (100x50…) : mobile Orsino
+# Lits junior 90x190 / 90x200 (demande du 20/11 : « enlever les mobiles musicaux en coup de cœur pour les lits juniors
+# 90x190 » et les remplacer par « deux lignes de coussins SJCS1 et SJCS2 ») : coussin carré Sunlight en ligne normale,
+# après le matelas et le sommier, puis coussin arc-en-ciel en coup de cœur (une seule ligne coup de cœur par fiche).
+# Lit junior = lit dont matelas.py retient le matelas Montana 90x190 ou 90x200 (encart.est_lit_junior).
+COMPLEMENTS_LITS_JUNIOR = ['SJCS1']
+COUP_DE_COEUR_LITS_JUNIOR = 'SJCS2'
