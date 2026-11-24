@@ -1,7 +1,7 @@
 {
-  "genere_le": "2026-11-24T01:18:22Z",
-  "produits_flux": 1661,
-  "produits_relies": 958,
+  "genere_le": "2026-11-24T11:32:44Z",
+  "produits_flux": 1658,
+  "produits_relies": 956,
   "groupes_variantes": 267,
   "fiches_composition": 227,
   "packs_lus": "122/126",
@@ -34,16 +34,16 @@
     ],
     "a_valider": []
   },
-  "encart_fiches": 676,
+  "encart_fiches": 675,
   "encart": {
-    "fiches": 676,
-    "lignes": 1620,
+    "fiches": 675,
+    "lignes": 1619,
     "roles": {
       "dr": 131,
       "ml": 241,
       "so": 11,
       "co": 849,
-      "ma": 236,
+      "ma": 235,
       "pl": 109,
       "ho": 34,
       "pa": 9
@@ -58,7 +58,7 @@
       "matelas_langer_defaut": 117,
       "tour_de_lit": 23,
       "plan": 109,
-      "matelas_langer_a_confirmer": 24,
+      "matelas_langer_a_confirmer": 23,
       "matelas_lit_autre": 15,
       "matelas_langer_lit_combine": 53,
       "housse": 5,
