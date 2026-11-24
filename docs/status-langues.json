@@ -1,6 +1,6 @@
 {
-  "genere_le": "2026-11-23T12:31:56Z",
-  "t": 1795437116,
+  "genere_le": "2026-11-24T01:18:22Z",
+  "t": 1795483102,
   "statut": "ok",
   "langues": {
     "es": {
@@ -8,7 +8,7 @@
       "publie": true,
       "erreurs": [],
       "avertissements": [],
-      "produits_flux": 1662,
+      "produits_flux": 1661,
       "produits_relies": 923,
       "groupes_variantes": 265,
       "fiches_composition": 197,
@@ -186,14 +186,14 @@
         "sans_traduction": [],
         "collisions": []
       },
-      "version_en_ligne": "2026-11-23T12:31:56Z"
+      "version_en_ligne": "2026-11-24T01:18:22Z"
     },
     "it": {
       "statut": "ok",
       "publie": true,
       "erreurs": [],
       "avertissements": [],
-      "produits_flux": 1662,
+      "produits_flux": 1661,
       "produits_relies": 921,
       "groupes_variantes": 263,
       "fiches_composition": 195,
@@ -378,7 +378,7 @@
         "sans_traduction": [],
         "collisions": []
       },
-      "version_en_ligne": "2026-11-23T12:31:56Z"
+      "version_en_ligne": "2026-11-24T01:18:22Z"
     }
   }
 }
