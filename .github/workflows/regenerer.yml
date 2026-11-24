@@ -17,6 +17,7 @@ permissions:
   contents: write
   pages: write
   id-token: write
+  actions: read        # liste des archives du passage (nouvel essai de publication, plus bas)
 
 concurrency:
   group: regenerer
@@ -29,7 +30,7 @@ jobs:
                                 # une génération normale ~2 min
     environment:
       name: github-pages
-      url: ${{ steps.deploiement.outputs.page_url }}
+      url: ${{ steps.deploiement.outputs.page_url || steps.deploiement_2.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -105,7 +106,27 @@ jobs:
         with:
           path: docs
 
+      # GitHub liste parfois l'archive des pages avec retard : la publication échoue alors aussitôt, « No artifacts named
+      # "github-pages" were found » (20/11 et 24/11/2026). Relancer le passage ne marche pas (l'archive y est ensuite en
+      # double) : nouvel essai dans le même passage, dès que l'archive apparaît dans la liste (5 min au plus).
       - id: deploiement
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+
+      - name: Attendre que GitHub liste l'archive des pages
+        if: steps.deploiement.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for i in $(seq 1 30); do
+            n=$(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts?name=github-pages" --jq '.total_count' || echo 0)
+            if [ "${n:-0}" -ge 1 ]; then echo "Archive listée après $(((i - 1) * 10)) s d'attente."; exit 0; fi
+            sleep 10
+          done
+          echo "Archive toujours absente de la liste après 5 min : nouvel essai quand même."
+
+      - id: deploiement_2
+        if: steps.deploiement.outcome == 'failure'
         uses: actions/deploy-pages@v4
 
       # Données publiées, mais lecture du site dégradée (pages illisibles ou vides) : l'encart garde les listes de la
