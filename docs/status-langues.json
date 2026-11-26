@@ -1,6 +1,6 @@
 {
-  "genere_le": "2026-11-25T22:49:16Z",
-  "t": 1795646956,
+  "genere_le": "2026-11-26T12:27:40Z",
+  "t": 1795696060,
   "statut": "ok",
   "langues": {
     "es": {
@@ -186,7 +186,7 @@
         "sans_traduction": [],
         "collisions": []
       },
-      "version_en_ligne": "2026-11-25T22:49:16Z"
+      "version_en_ligne": "2026-11-26T12:27:40Z"
     },
     "it": {
       "statut": "ok",
@@ -378,7 +378,7 @@
         "sans_traduction": [],
         "collisions": []
       },
-      "version_en_ligne": "2026-11-25T22:49:16Z"
+      "version_en_ligne": "2026-11-26T12:27:40Z"
     }
   }
 }
