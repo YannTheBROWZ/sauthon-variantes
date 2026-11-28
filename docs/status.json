@@ -1,6 +1,6 @@
 {
-  "genere_le": "2026-11-27T22:24:21Z",
-  "produits_flux": 1654,
+  "genere_le": "2026-11-28T11:45:47Z",
+  "produits_flux": 1653,
   "produits_relies": 953,
   "groupes_variantes": 267,
   "fiches_composition": 227,
@@ -37,12 +37,12 @@
   "encart_fiches": 674,
   "encart": {
     "fiches": 674,
-    "lignes": 1616,
+    "lignes": 1615,
     "roles": {
       "dr": 131,
       "ml": 240,
       "so": 11,
-      "co": 848,
+      "co": 847,
       "ma": 235,
       "pl": 109,
       "ho": 33,
@@ -50,7 +50,7 @@
     },
     "coups_de_coeur": 233,
     "publiees_par_regle": {
-      "complement_demande": 660,
+      "complement_demande": 659,
       "matelas_lit_junior": 11,
       "sommier": 11,
       "matelas_lit_demande": 214,
